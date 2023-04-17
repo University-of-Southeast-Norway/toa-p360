@@ -110,7 +110,7 @@ Get-Content log{dato:yyyymmdd}.txt -wait
 Konfigurasjon av miljø variable settes opp i en fil kaldt _appsettings.json_. Det følger med en _appsettings.template.json_ som inneholder alle parameterne som skal settes opp. En del parametere er forhåndsdefinert, og det er ikke behov for å endre disse.
 
 ### Parametere:
-``` JSON
+```
 // Service bruker som benyttes ved kobling mot P360 API.
 P360:ClientOptions:AdContextUser
 
