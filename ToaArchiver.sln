@@ -1,0 +1,85 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32804.467
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ToaArchiver.Domain", "ToaArchiver.Domain\ToaArchiver.Domain.csproj", "{B78AA3FE-1B99-4405-A1B9-02323C93A103}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ToaArchiver.Domain.IntegrationTest", "ToaArchiver.Domain.IntegrationTest\ToaArchiver.Domain.IntegrationTest.csproj", "{4132D695-7790-443C-8E2B-CA075BB3EC0E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ToaArchiver.Domain.UnitTest", "ToaArchiver.Domain.UnitTest\ToaArchiver.Domain.UnitTest.csproj", "{82835265-3F02-4100-B4C3-987981AF50B7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ToaArchiver.UnitTest", "ToaArchiver.UnitTest\ToaArchiver.UnitTest.csproj", "{81347D12-BCA6-4EB5-BAB1-5F0F78841170}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ToaArchiver.IntegrationTest", "ToaArchiver.IntegrationTest\ToaArchiver.IntegrationTest.csproj", "{3E77D72F-CF48-4A49-9A55-00EC1B769967}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ToaArchiver.Listeners", "ToaArchiver.Listeners\ToaArchiver.Listeners.csproj", "{C1097530-A859-4302-8EAE-845E00DC7614}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ToaArchiver.Listeners.IntegrationTest", "ToaArchiver.Listeners.IntegrationTest\ToaArchiver.Listeners.IntegrationTest.csproj", "{A90414E3-7B0B-48D4-9AD1-8BEBDE0FDAD0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ToaArchiver.Archives", "ToaArchiver.Archives\ToaArchiver.Archives.csproj", "{94F28604-F106-43D0-A1A1-327CC84C3FB3}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ToaArchiver.Worker", "ToaArchiver.Worker\ToaArchiver.Worker.csproj", "{B93CDDB3-38F0-4FE6-A006-719DB1D56B6E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ToaArchiver.WindowsService", "ToaArchiver.WindowsService\ToaArchiver.WindowsService.csproj", "{ED4FB1F9-A5F6-4CD6-B9C1-D06EADAEA129}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ToaArchiver.Docker", "ToaArchiver.Docker\ToaArchiver.Docker.csproj", "{A711474B-BA22-4F80-9FEA-7DD805107A31}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B78AA3FE-1B99-4405-A1B9-02323C93A103}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B78AA3FE-1B99-4405-A1B9-02323C93A103}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B78AA3FE-1B99-4405-A1B9-02323C93A103}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B78AA3FE-1B99-4405-A1B9-02323C93A103}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4132D695-7790-443C-8E2B-CA075BB3EC0E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4132D695-7790-443C-8E2B-CA075BB3EC0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4132D695-7790-443C-8E2B-CA075BB3EC0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4132D695-7790-443C-8E2B-CA075BB3EC0E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{82835265-3F02-4100-B4C3-987981AF50B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{82835265-3F02-4100-B4C3-987981AF50B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{82835265-3F02-4100-B4C3-987981AF50B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{82835265-3F02-4100-B4C3-987981AF50B7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{81347D12-BCA6-4EB5-BAB1-5F0F78841170}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81347D12-BCA6-4EB5-BAB1-5F0F78841170}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81347D12-BCA6-4EB5-BAB1-5F0F78841170}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81347D12-BCA6-4EB5-BAB1-5F0F78841170}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E77D72F-CF48-4A49-9A55-00EC1B769967}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E77D72F-CF48-4A49-9A55-00EC1B769967}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E77D72F-CF48-4A49-9A55-00EC1B769967}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E77D72F-CF48-4A49-9A55-00EC1B769967}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C1097530-A859-4302-8EAE-845E00DC7614}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1097530-A859-4302-8EAE-845E00DC7614}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1097530-A859-4302-8EAE-845E00DC7614}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1097530-A859-4302-8EAE-845E00DC7614}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A90414E3-7B0B-48D4-9AD1-8BEBDE0FDAD0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A90414E3-7B0B-48D4-9AD1-8BEBDE0FDAD0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A90414E3-7B0B-48D4-9AD1-8BEBDE0FDAD0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A90414E3-7B0B-48D4-9AD1-8BEBDE0FDAD0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94F28604-F106-43D0-A1A1-327CC84C3FB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94F28604-F106-43D0-A1A1-327CC84C3FB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94F28604-F106-43D0-A1A1-327CC84C3FB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94F28604-F106-43D0-A1A1-327CC84C3FB3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B93CDDB3-38F0-4FE6-A006-719DB1D56B6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B93CDDB3-38F0-4FE6-A006-719DB1D56B6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B93CDDB3-38F0-4FE6-A006-719DB1D56B6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B93CDDB3-38F0-4FE6-A006-719DB1D56B6E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ED4FB1F9-A5F6-4CD6-B9C1-D06EADAEA129}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED4FB1F9-A5F6-4CD6-B9C1-D06EADAEA129}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ED4FB1F9-A5F6-4CD6-B9C1-D06EADAEA129}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ED4FB1F9-A5F6-4CD6-B9C1-D06EADAEA129}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A711474B-BA22-4F80-9FEA-7DD805107A31}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A711474B-BA22-4F80-9FEA-7DD805107A31}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A711474B-BA22-4F80-9FEA-7DD805107A31}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A711474B-BA22-4F80-9FEA-7DD805107A31}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {43FD8E30-DDA1-4EE9-8FE9-A884B1C70B53}
+	EndGlobalSection
+EndGlobal
