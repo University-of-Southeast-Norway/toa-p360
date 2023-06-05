@@ -124,6 +124,7 @@ P360:ClientOptions:ApiKey
 AppendCaseOptions:InProductionDate
 
 // PROD: https://api.dfo.no/ TEST: https://api-test.dfo.no/
+// Dersom IntArk benyttes settes denne til base-address for DFØ API'et i IntArk.
 Dfo:Api:BaseAddress
 
 // True: Alle meldinger som er håndtert av denne løsningen kvitteres ut i meldingskøen som utført.
@@ -164,5 +165,8 @@ Dfo:Maskinporten:TokenEndpoint
 
 // Issuer hentes fra Samarbeidsportalen (Integrasjons-ID).
 Dfo:Maskinporten:Issuer
+
+// Oppsett for autentisering dersom IntArk benyttes. Settes for hvert scope.
+Dfo:ApiKeys:value
 
 ```
