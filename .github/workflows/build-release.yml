@@ -52,7 +52,7 @@ jobs:
         with:
           type: 'tar.gz'
           directory: ${{ github.workspace }}/publish
-          path: linux-64
+          path: ${{ env.runtime_lin }}
           filename: 'release-${{ env.runtime_lin }}.tar.gz'
 
       - name: Archive Windows Release
@@ -60,7 +60,7 @@ jobs:
         with:
           type: 'zip'
           directory: ${{ github.workspace }}/publish
-          path: win-64
+          path: ${{ env.runtime_win }}
           filename: 'release-${{ env.runtime_win }}.zip'
 
       - name: Create release
