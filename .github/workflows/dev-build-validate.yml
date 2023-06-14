@@ -1,4 +1,4 @@
-name: dotnet build and package
+name: validate build
 
 on: [workflow_dispatch]
 
