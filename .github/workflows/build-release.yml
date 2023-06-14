@@ -53,7 +53,7 @@ jobs:
           type: 'tar.gz'
           directory: ${{ github.workspace }}/publish
           path: linux-64
-          filename: 'output/release-${{ env.runtime_lin }}.tar.gz'
+          filename: 'release-${{ env.runtime_lin }}.tar.gz'
 
       - name: Archive Windows Release
         uses: thedoctor0/zip-release@0.7.1
@@ -61,9 +61,9 @@ jobs:
           type: 'zip'
           directory: ${{ github.workspace }}/publish
           path: win-64
-          filename: 'output/release-${{ env.runtime_win }}.zip'
+          filename: 'release-${{ env.runtime_win }}.zip'
 
       - name: Create release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "${{ github.workspace }}/publish/output/*.*"
+          artifacts: "${{ github.workspace }}/publish/*.zip,${{ github.workspace }}/publish/*.tar.gz"
