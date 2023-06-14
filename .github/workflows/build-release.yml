@@ -41,7 +41,7 @@ jobs:
       - name: Build for linux
         run: dotnet publish ${{ env.main_proj_lin }} --configuration ${{ env.configuraton }} --no-restore --framework ${{ env.framework }} --runtime ${{ env.runtime_lin }} -p:PublishProfile=FolderProfile,UseAppHost=true --output publish/${{ env.runtime_lin }}
       - name: Build for windows
-        run: dotnet publish ${{ env.main_proj_win }} --configuration ${{ env.configuraton }} --no-restore --framework ${{ env.framework }} --runtime ${{ env.runtime_win }} -p:PublishProfile=FolderProfile --output publish/${{ env.runtime_win }}
+        run: dotnet publish ${{ env.main_proj_win }} --configuration ${{ env.configuraton }} --no-restore --framework ${{ env.framework }} --runtime ${{ env.runtime_win }} -p:PublishProfile=FolderProfile,UseAppHost=true --output publish/${{ env.runtime_win }}
       - name: Test ToaArchiver.UnitTest
         run: dotnet test ToaArchiver.UnitTest/*.csproj --no-restore --verbosity normal
       - name: Test ToaArchiver.Domain.UnitTest
