@@ -30,5 +30,7 @@ jobs:
         run: dotnet restore
       - name: Build
         run: dotnet build --configuration Release --no-restore
-      - name: Test
-        run: dotnet test ${{ env.test_project }} --no-restore --verbosity normal
+      - name: Test ToaArchiver.UnitTest
+        run: dotnet test ToaArchiver.UnitTest/*.csproj --no-restore --verbosity normal
+      - name: Test ToaArchiver.Domain.UnitTest
+        run: dotnet test ToaArchiver.Domain.UnitTest/*.csproj --no-restore --verbosity normal
