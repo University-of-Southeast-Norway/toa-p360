@@ -38,7 +38,7 @@ public class ContractStatusChangedHandler : MessageHandlerBase<ContractStatusCha
             return;
         }
 
-        _logger.LogInformation("New contract status is {Status}", contract.Status);
+        _logger.LogInformation("Contract with sequence number {ContractSequenceNumber} status is {ContractStatus}", sequenceNumber, contract.Status);
         if (!IsContractSigned(contract))
         {
             _logger.LogInformation("Contract on sequence number {SequenceNumber} is not signed", sequenceNumber);
