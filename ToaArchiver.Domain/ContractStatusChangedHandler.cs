@@ -34,14 +34,14 @@ public class ContractStatusChangedHandler : MessageHandlerBase<ContractStatusCha
 
         if (contract == null)
         {
-            _logger.LogWarning("Could not fetch contract on sequence number {SequenceNumber}", sequenceNumber);
+            _logger.LogWarning("Could not fetch contract on sequence number {ContractSequenceNumber}", sequenceNumber);
             return;
         }
 
-        _logger.LogInformation("Contract with sequence number {ContractSequenceNumber} status is {ContractStatus}", sequenceNumber, contract.Status);
+        _logger.LogInformation("Contract with sequence number {ContractSequenceNumber} has status {ContractStatus}", sequenceNumber, contract.Status);
         if (!IsContractSigned(contract))
         {
-            _logger.LogInformation("Contract on sequence number {SequenceNumber} is not signed", sequenceNumber);
+            _logger.LogInformation("Contract on sequence number {ContractSequenceNumber} is not signed", sequenceNumber);
             return;
         }
 
