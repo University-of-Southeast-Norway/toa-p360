@@ -17,7 +17,7 @@ Metadata på sak og dokument i P360 defineres i egne definisjonsfiler som kommer
 1. Opprett en avtale om bruk av DFØ API'er via institusjonens kundekontakt mot DFØ (mer info på [DFØ API-portal](https://api-portal.dfo.no))
 2. Bestill virksomhetssertifikat fra [Buypass](https://www.buypass.no) eller [Commfides](https://www.commfides.no)
 3. Opprett en integrasjon mot Maskinporten i [Samarbeidsportalen til Digdir](https://samarbeid.digdir.no)
-   * Integrasjonen skal settes opp med scope ```dfo:ansatte dfo:stillinger dfo:organisasjoner dfo:ansatte/infokontrakter dfo:infokontrakter/filer```
+   * Integrasjonen skal settes opp med scope ```dfo:ansatte dfo:ansatte/infokontrakter dfo:infokontrakter/filer```
 4. Last ned [binærfiler]() eller [kildekode]()
 5. Installer som [Windows Service](#installasjon-og-eksekvering-av-windows-service) eller Linux Docker
 6. Sett opp [definisjonsfiler](#definisjonsfiler)
