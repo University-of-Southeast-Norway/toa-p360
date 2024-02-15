@@ -13,17 +13,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ToaArchiver.UnitTest", "Toa
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ToaArchiver.IntegrationTest", "ToaArchiver.IntegrationTest\ToaArchiver.IntegrationTest.csproj", "{3E77D72F-CF48-4A49-9A55-00EC1B769967}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ToaArchiver.Listeners", "ToaArchiver.Listeners\ToaArchiver.Listeners.csproj", "{C1097530-A859-4302-8EAE-845E00DC7614}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ToaArchiver.Listeners.IntegrationTest", "ToaArchiver.Listeners.IntegrationTest\ToaArchiver.Listeners.IntegrationTest.csproj", "{A90414E3-7B0B-48D4-9AD1-8BEBDE0FDAD0}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ToaArchiver.Archives", "ToaArchiver.Archives\ToaArchiver.Archives.csproj", "{94F28604-F106-43D0-A1A1-327CC84C3FB3}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ToaArchiver.Worker", "ToaArchiver.Worker\ToaArchiver.Worker.csproj", "{B93CDDB3-38F0-4FE6-A006-719DB1D56B6E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ToaArchiver.WindowsService", "ToaArchiver.WindowsService\ToaArchiver.WindowsService.csproj", "{ED4FB1F9-A5F6-4CD6-B9C1-D06EADAEA129}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ToaArchiver.WindowsService", "ToaArchiver.WindowsService\ToaArchiver.WindowsService.csproj", "{ED4FB1F9-A5F6-4CD6-B9C1-D06EADAEA129}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ToaArchiver.Docker", "ToaArchiver.Docker\ToaArchiver.Docker.csproj", "{A711474B-BA22-4F80-9FEA-7DD805107A31}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ToaArchiver.Docker", "ToaArchiver.Docker\ToaArchiver.Docker.csproj", "{A711474B-BA22-4F80-9FEA-7DD805107A31}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,14 +47,6 @@ Global
 		{3E77D72F-CF48-4A49-9A55-00EC1B769967}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3E77D72F-CF48-4A49-9A55-00EC1B769967}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3E77D72F-CF48-4A49-9A55-00EC1B769967}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C1097530-A859-4302-8EAE-845E00DC7614}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C1097530-A859-4302-8EAE-845E00DC7614}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C1097530-A859-4302-8EAE-845E00DC7614}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C1097530-A859-4302-8EAE-845E00DC7614}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A90414E3-7B0B-48D4-9AD1-8BEBDE0FDAD0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A90414E3-7B0B-48D4-9AD1-8BEBDE0FDAD0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A90414E3-7B0B-48D4-9AD1-8BEBDE0FDAD0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A90414E3-7B0B-48D4-9AD1-8BEBDE0FDAD0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{94F28604-F106-43D0-A1A1-327CC84C3FB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{94F28604-F106-43D0-A1A1-327CC84C3FB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{94F28604-F106-43D0-A1A1-327CC84C3FB3}.Release|Any CPU.ActiveCfg = Release|Any CPU

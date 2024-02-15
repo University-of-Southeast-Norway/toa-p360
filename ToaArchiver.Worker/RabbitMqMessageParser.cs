@@ -2,17 +2,14 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using RabbitMQ.Client.Events;
-using System.Linq;
 using System.Text;
 using ToaArchiver.Domain;
 using ToaArchiver.Domain.Core;
 using ToaArchiver.Domain.Core.Generic;
 using ToaArchiver.Domain.Messages;
 
-namespace ToaArchiver.Listeners.Parsers;
+namespace ToaArchiver.Worker;
 
 public class RabbitMqMessageParser : IParseMessage<byte[]>
 {
