@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="P360Client" Version="4.1.0" />
-    <PackageReference Include="P360Client.Domain" Version="3.6.0" />
+    <PackageReference Include="P360Client" Version="8.11.1" />
+    <PackageReference Include="P360Client.Domain" Version="9.2.1" />
   </ItemGroup>
 
   <ItemGroup>

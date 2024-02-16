@@ -15,6 +15,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using ToaArchiver.Domain;
+using P360Client.DTO;
 
 namespace ToaArchiver.Worker.Extensions;
 
@@ -43,9 +44,8 @@ public static class HostConfigurationExtension
             .AddSingleton<ITokenResolver, MaskinportenTokenResolver>()
             .AddSingleton(SetUpConnectionFactory)
             .AddScoped(CreateDfoClient)
-            .AddP360DomainResourcesScoped()
-            .UseDefaultP360ClientResourcesScoped()
-            .UseP360DomainJsonTemplateRepositoryScoped()
+            .AddP360Client("P360").UseDefaultClientResources().Services
+            .AddP360Factory().UseJsonTemplateRepository().Services
             .AddScoped<IArchive, P360Archive>()
             .AddScoped<IParseMessage<byte[]>, RabbitMqMessageParser>()
             .AddScoped<IInvokeMessageHandler<byte[]>, MessageHandlerInvoker<byte[]>>()

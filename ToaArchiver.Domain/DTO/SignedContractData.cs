@@ -1,4 +1,5 @@
-﻿namespace ToaArchiver.Domain.DTO
+﻿
+namespace ToaArchiver.Domain.DTO
 {
     public record class SignedContractData
     {
@@ -13,5 +14,6 @@
         public string? Email { get; init; }
         public string? SequenceNumber { get; init; }
         public string? FileContent { get; init; }
+        public DateTimeOffset? SignedDate { get; init; }
     }
 }

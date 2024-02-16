@@ -63,7 +63,8 @@ public class ContractStatusChangedHandler : MessageHandlerBase<ContractStatusCha
             PostalOffice = employee.City,
             MobilePhoneNumber = employee.PhoneNumber,
             Email = employee.Email,
-            FileContent = contract.FileContent
+            FileContent = contract.FileContent,
+            SignedDate = contract.Date
         };
         await _archive.UploadSignedContractAsync(uploadFileRequirements);
     }
