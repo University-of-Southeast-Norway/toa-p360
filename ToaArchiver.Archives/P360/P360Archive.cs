@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using P360Client.Domain;
-using P360Client.Domain.Configurations;
 using P360Client.Domain.Factory;
 using P360Client.Domain.Model;
 using ToaArchiver.Domain.Core;
@@ -12,13 +11,13 @@ namespace ToaArchiver.Archives.P360
     public class P360Archive : IArchive
     {
         private readonly ICaseFactory _caseFactory;
-        private readonly IOptions<AppendCaseOptions> _options;
+        private readonly P360ArchiveOptions _options;
         private readonly ILogger<P360Archive> _logger;
 
-        public P360Archive(ICaseFactory caseFactory, IOptions<AppendCaseOptions> options, ILoggerFactory loggerFactory)
+        public P360Archive(ICaseFactory caseFactory, IOptions<P360ArchiveOptions> options, ILoggerFactory loggerFactory)
         {
             _caseFactory = caseFactory;
-            _options = options;
+            _options = options.Value;
             _logger = loggerFactory.CreateLogger<P360Archive>();
         }
 
@@ -57,6 +56,19 @@ namespace ToaArchiver.Archives.P360
                 documentBuilder
                     .AppendFiles().SignOff()
                     .AppendPrivatePersonReference("Avsender", contactReference, false, false);
+                if (!string.IsNullOrEmpty(uploadFileRequirements.CaseManagerId ?? uploadFileRequirements.CaseManagerEmail))
+                {
+                    UniqueQueryAttributesTemplate? responsibleTemplate = _options.Responsible;
+                    string? externalId = responsibleTemplate?.ExternalId;
+                    string? email = responsibleTemplate?.Email;
+
+                    ContactPerson personReference = new()
+                    {
+                        ExternalId = externalId?.Replace("{dfo.caseManager.id}", uploadFileRequirements.CaseManagerId!)?.Replace("{dfo.caseManager.email}", uploadFileRequirements.CaseManagerEmail!),
+                        Email = email?.Replace("{dfo.caseManager.id}", uploadFileRequirements.CaseManagerId!)?.Replace("{dfo.caseManager.email}", uploadFileRequirements.CaseManagerEmail!)
+                    };
+                    documentBuilder.AddContactPersonReference("Mottaker", personReference, true, true);
+                }
                 if (uploadFileRequirements.SignedDate.HasValue) documentBuilder.WithDocumentDate(uploadFileRequirements.SignedDate.Value);
                 await builder.Build().SubmitAsync();
             }

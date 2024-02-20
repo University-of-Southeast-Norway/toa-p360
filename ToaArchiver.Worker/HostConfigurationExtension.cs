@@ -27,7 +27,7 @@ public static class HostConfigurationExtension
     {
         var configurationRoot = hostingContext.Configuration;
         services.Configure<P360Client.Configurations.ClientOptions>(configurationRoot.GetSection(key: "P360:ClientOptions"));
-        services.Configure<AppendCaseOptions>(configurationRoot.GetSection(key: "P360:AppendCaseOptions"));
+        services.Configure<P360ArchiveOptions>(configurationRoot.GetSection(key: "P360:Archive"));
         services.Configure<DfoClientOptions>(configurationRoot.GetSection(key: "Dfo:Api"));
         services.Configure<MaskinportenTokenResolverOptions>(configurationRoot.GetSection(key: "Dfo:Maskinporten"));
         services.Configure<RabbitMqListenerOptions>(configurationRoot.GetSection(key: "Dfo:Queue"));

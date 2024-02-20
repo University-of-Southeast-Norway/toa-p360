@@ -52,6 +52,9 @@ public class ContractStatusChangedHandler : MessageHandlerBase<ContractStatusCha
             return;
         }
 
+        EmployeeContract? employeeContract = await _dfoClient.GetEmployeeContractAsync(employee.Id, contract.ContractId);
+        Employee? caseManager = (await _dfoClient.QueryEmployeeAsync(dfoBrukerident: employeeContract.CaseManager))?.FirstOrDefault();
+
         DTO.SignedContractData uploadFileRequirements = new()
         {
             SequenceNumber = sequenceNumber,
@@ -64,7 +67,9 @@ public class ContractStatusChangedHandler : MessageHandlerBase<ContractStatusCha
             MobilePhoneNumber = employee.PhoneNumber,
             Email = employee.Email,
             FileContent = contract.FileContent,
-            SignedDate = contract.Date
+            SignedDate = contract.Date,
+            CaseManagerId = caseManager?.Id,
+            CaseManagerEmail = caseManager?.Email
         };
         await _archive.UploadSignedContractAsync(uploadFileRequirements);
     }

@@ -15,5 +15,7 @@ namespace ToaArchiver.Domain.DTO
         public string? SequenceNumber { get; init; }
         public string? FileContent { get; init; }
         public DateTimeOffset? SignedDate { get; init; }
+        public string? CaseManagerId { get; init; }
+        public string? CaseManagerEmail { get; init; }
     }
 }

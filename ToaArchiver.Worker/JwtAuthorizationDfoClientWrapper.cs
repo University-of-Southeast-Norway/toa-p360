@@ -55,4 +55,10 @@ public class JwtAuthorizationDfoClientWrapper : IClient
     {
         return await _client.GetContractsAsync(contractNumber!, employeeId!, fromDate, toDate, includeToDate);
     }
+
+    public Task<IEnumerable<Employee>> QueryEmployeeAsync(string? brukerident = null, string? dfoBrukerident = null, string? fornavn = null, string? etternavn = null, string? fnr = null, string? stillingId = null, string? organisasjonId = null, string? jurBedriftsnummer = null, string? epost = null)
+        => _client.QueryEmployeeAsync(brukerident, dfoBrukerident, fornavn, etternavn, fnr, stillingId, organisasjonId, jurBedriftsnummer, epost);
+
+    public Task<IEnumerable<ESkjemaLogg>> GetEskjemaLogg(string sequenceNumber, string employeeId = null)
+        => _client.GetEskjemaLogg(sequenceNumber, employeeId);
 }
