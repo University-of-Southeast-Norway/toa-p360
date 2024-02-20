@@ -7,6 +7,8 @@ using ToaArchiver.Worker.Configurations;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
 
 namespace ToaArchiver.Worker
 {
@@ -15,17 +17,19 @@ namespace ToaArchiver.Worker
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly IConnection? _connection;
         private readonly IOptionsMonitor<RabbitMqListenerOptions> _options;
+        private readonly TelemetryClient _telemetryClient;
         private readonly ILogger<RabbitMqListenerService> _logger;
         private IModel? _model;
         private EventingBasicConsumer? _consumer;
         private static readonly SemaphoreSlim _theLock = new(1,1);
 
-        public RabbitMqListenerService(IServiceScopeFactory serviceScopeFactory, IConnection connection, IOptionsMonitor<RabbitMqListenerOptions> options, ILogger<RabbitMqListenerService> logger)
+        public RabbitMqListenerService(IServiceScopeFactory serviceScopeFactory, IConnection connection, IOptionsMonitor<RabbitMqListenerOptions> options, ILogger<RabbitMqListenerService> logger, TelemetryClient telemetryClient)
         {
             _serviceScopeFactory = serviceScopeFactory;
             _connection = connection;
             _logger = logger;
             _options = options;
+            _telemetryClient = telemetryClient;
         }
 
         public RabbitMqListenerService(IServiceScopeFactory serviceScopeFactory, ConnectionFactory connectionFactory, IOptionsMonitor<RabbitMqListenerOptions> options, ILogger<RabbitMqListenerService> logger)
@@ -66,10 +70,17 @@ namespace ToaArchiver.Worker
             _logger.LogDebug("Message redelivered: {MessageId}", message.BasicProperties.MessageId);
             _logger.LogDebug("Message redelivered: {CorrelationId}", message.BasicProperties.CorrelationId);
 
+            RequestTelemetry requestTelemetry = new() { Name = $"Process {_model?.CurrentQueue}" };
+            requestTelemetry.Context.Operation.Id = message.BasicProperties.MessageId;
+            requestTelemetry.Context.Operation.ParentId = message.BasicProperties.CorrelationId;
+            using var operation = _telemetryClient.StartOperation(requestTelemetry);
+            _telemetryClient.TrackEvent("Message received");
+
             try
             {
                 byte[] body = message.Body.ToArray();
                 await _theLock.WaitAsync();
+
                 IServiceScope serviceScope = _serviceScopeFactory.CreateScope();
                 var messageHandlerInvoker = serviceScope.ServiceProvider.GetRequiredService<IInvokeMessageHandler<byte[]>>();
                 IHandleMessage messageHandler = await messageHandlerInvoker.InvokeAsync(body);
@@ -78,6 +89,7 @@ namespace ToaArchiver.Worker
             }
             catch (Exception ex)
             {
+                _telemetryClient.TrackException(ex);
                 _model?.BasicNack(message.DeliveryTag, false, true);
                 _logger.LogError(ex, "Unhandled exception occured while trying to handle message {Message}", message);
             }
