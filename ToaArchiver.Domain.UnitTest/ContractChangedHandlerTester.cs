@@ -1,9 +1,7 @@
 ﻿using DfoClient;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-using Serilog;
-using Serilog.Extensions.Logging;
-using System.Diagnostics.Contracts;
 using System.Dynamic;
 using ToaArchiver.Domain.Core;
 using ToaArchiver.Domain.Messages;
@@ -32,9 +30,9 @@ public class ContractChangedHandlerTester
     {
         ContractStatusChangedMessage message = new(SequenceNumber: SequenceNumber, CorrelationId: CorrelationId, Source: Source, Subject: Subject, Uri: Uri, ValidAfter: ValidAfter);
         _mockTestOutputHelper = MockLogger();
-        Microsoft.Extensions.Logging.ILogger microsoftLogger = new SerilogLoggerFactory(ConfigureLogger(_mockTestOutputHelper.Object)).CreateLogger(nameof(ContractChangedHandlerTester));
+        var microsoftLogger = new Mock<ILogger>();
         SetupMockToaOpations();
-        _contractStatusChangedHandler = new(_mockArchive.Object, _mockDfoClient.Object, message, _mockToaOptions.Object, microsoftLogger);
+        _contractStatusChangedHandler = new(_mockArchive.Object, _mockDfoClient.Object, message, _mockToaOptions.Object, microsoftLogger.Object);
     }
 
     private void SetupMockToaOpations()
@@ -202,10 +200,5 @@ public class ContractChangedHandlerTester
     {
         Mock<ITestOutputHelper> mockTestOutputHelper = new Mock<ITestOutputHelper>();
         return mockTestOutputHelper;
-    }
-
-    private static ILogger ConfigureLogger(ITestOutputHelper testOutputHelper)
-    {
-        return new LoggerConfiguration().MinimumLevel.Debug().WriteTo.TestOutput(testOutputHelper).CreateLogger();
     }
 }

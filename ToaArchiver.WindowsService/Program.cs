@@ -1,8 +1,4 @@
-﻿using Microsoft.Extensions.Logging.Configuration;
-using Microsoft.Extensions.Logging.EventLog;
-using Microsoft.Extensions.Options;
-using Serilog;
-using ToaArchiver.Worker;
+﻿using ToaArchiver.Worker;
 using ToaArchiver.Worker.Extensions;
 
 #if !DEBUG
@@ -16,37 +12,21 @@ using IHost host = Host.CreateDefaultBuilder(args)
     })
     .ConfigureToaServices()
     .ConfigureServices(ConfigureHostedService)
-    //.ConfigureServices(services =>
-    //{
-    //    LoggerProviderOptions.RegisterProviderOptions<
-    //        EventLogSettings, EventLogLoggerProvider>(services);
-    //})
-    //.ConfigureLogging((context, logging) =>
-    //{
-    //    // See: https://github.com/dotnet/runtime/issues/47303
-    //    logging.AddConfiguration(
-    //        context.Configuration.GetSection("Logging"));
-    //})
     .Build();
 
-HostConfigurationExtension.ConfigureSerilogFromConfiguration(host.Services.GetRequiredService<IConfiguration>());
-
+var logger = host.Services.GetRequiredService<ILogger<Program>>();
 try
 {
-    Log.Information("Service starting.");
+    logger.LogInformation("Service starting.");
     await host.RunAsync();
-    Log.Information("Service shutting down.");
+    logger.LogInformation("Service shutting down.");
 }
 catch(Exception ex)
 {
-    Log.Fatal(ex, "Fatal error occured. Shutting down service.");
+    logger.LogCritical(ex, "Fatal error occured. Shutting down service.");
     Environment.Exit(1);
-}
-finally
-{
-    Log.CloseAndFlush();
 }
 
 static void ConfigureHostedService(IServiceCollection services) => services
-        .AddHostedService<RabbitMqListenerService>()
+        .AddHostedService<RabbitMqListenerService>().AddApplicationInsightsTelemetryWorkerService()
         ;

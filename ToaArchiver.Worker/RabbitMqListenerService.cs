@@ -61,8 +61,11 @@ namespace ToaArchiver.Worker
 
         private async void MessageReceived(BasicDeliverEventArgs message)
         {
-            _logger.LogInformation("Message received with delivery tag {DeliveryTag}", message.DeliveryTag);
-            _logger.LogDebug("Message received {@Message}", message);
+            _logger.LogInformation("Message received with routing key {RoutingKey}", message.RoutingKey);
+            _logger.LogDebug("Message redelivered: {Redelivered}", message.Redelivered);
+            _logger.LogDebug("Message redelivered: {MessageId}", message.BasicProperties.MessageId);
+            _logger.LogDebug("Message redelivered: {CorrelationId}", message.BasicProperties.CorrelationId);
+
             try
             {
                 byte[] body = message.Body.ToArray();

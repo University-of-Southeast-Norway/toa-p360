@@ -1,21 +1,16 @@
 using DfoClient;
-using RabbitMQ.Client.Events;
 using ToaArchiver.Domain.Core.Generic;
 using ToaArchiver.Domain.Core;
 using ToaArchiver.Archives.P360;
 using RabbitMQ.Client;
 using P360Client.Domain.Extensions;
 using System.Web;
-using Serilog;
-using Serilog.Events;
 using P360Client.Domain.Configurations;
 using ToaArchiver.Worker.Configurations;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Configuration;
 using ToaArchiver.Domain;
-using P360Client.DTO;
 
 namespace ToaArchiver.Worker.Extensions;
 
@@ -25,7 +20,7 @@ public static class HostConfigurationExtension
     {
         return source.ConfigureServices(ConfigureServices)
             .ConfigureServices(ConfigureOptions)
-            .UseSerilog();
+            ;
     }
 
     static void ConfigureOptions(HostBuilderContext hostingContext, IServiceCollection services)
@@ -82,64 +77,5 @@ public static class HostConfigurationExtension
         {
             Uri = uriBuilder.Uri
         };
-    }
-
-    public static void ConfigureSerilogFromConfiguration(IConfiguration configuration)
-    {
-        Log.Logger = new LoggerConfiguration()
-            .ReadFrom.Configuration(configuration)
-            .Destructure.ByTransforming<BasicDeliverEventArgs>(
-                r => new
-                {
-                    r.Exchange,
-                    r.ConsumerTag,
-                    r.DeliveryTag,
-                    r.Redelivered,
-                    r.RoutingKey,
-                    BasicProperties = new
-                    {
-                        r.BasicProperties?.MessageId,
-                        r.BasicProperties?.AppId,
-                        r.BasicProperties?.Priority,
-                        r.BasicProperties?.Persistent,
-                        r.BasicProperties?.ProtocolClassId,
-                        r.BasicProperties?.ReplyTo,
-                        r.BasicProperties?.Timestamp,
-                        r.BasicProperties?.Type,
-                        r.BasicProperties?.UserId
-                    }
-                })
-            .CreateLogger();
-    }
-
-    public static void ConfigureSerilogConsole()
-    {
-        Log.Logger = new LoggerConfiguration()
-                    .MinimumLevel.Information()
-                    .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
-                    .Enrich.FromLogContext()
-                    .Destructure.ByTransforming<BasicDeliverEventArgs>(
-                        r => new
-                        {
-                            r.Exchange,
-                            r.ConsumerTag,
-                            r.DeliveryTag,
-                            r.Redelivered,
-                            r.RoutingKey,
-                            BasicProperties = new
-                            {
-                                r.BasicProperties?.MessageId,
-                                r.BasicProperties?.AppId,
-                                r.BasicProperties?.Priority,
-                                r.BasicProperties?.Persistent,
-                                r.BasicProperties?.ProtocolClassId,
-                                r.BasicProperties?.ReplyTo,
-                                r.BasicProperties?.Timestamp,
-                                r.BasicProperties?.Type,
-                                r.BasicProperties?.UserId
-                            }
-                        })
-                    .WriteTo.Console()
-                    .CreateLogger();
     }
 }
