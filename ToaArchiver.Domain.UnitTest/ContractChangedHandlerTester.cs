@@ -145,6 +145,7 @@ public class ContractChangedHandlerTester
     private static Employee CreateEmployee()
     {
         dynamic dynamicEmployee = new ExpandoObject();
+        dynamicEmployee.id = "id";
         dynamicEmployee.fnr = "fnr";
         dynamicEmployee.fornavn = "fornavn";
         dynamicEmployee.etternavn = "etternavn";
@@ -153,6 +154,10 @@ public class ContractChangedHandlerTester
         dynamicEmployee.privatPoststed = "privatPoststed";
         dynamicEmployee.mobilPrivat = "mobilPrivat";
         dynamicEmployee.epost = "epost";
+        dynamicEmployee.saksbehandler = "saksbehandler";
+        dynamicEmployee.organisasjonId = 1;
+        dynamicEmployee.stillingId = 2;
+        dynamicEmployee.lederflagg = false;
         return new Employee(dynamicEmployee);
     }
 }
