@@ -52,8 +52,13 @@ public class ContractStatusChangedHandler : MessageHandlerBase<ContractStatusCha
             return;
         }
 
+        Employee? caseManager = null;
         EmployeeContract? employeeContract = await _dfoClient.GetEmployeeContractAsync(employee.Id, contract.ContractId);
-        Employee? caseManager = (await _dfoClient.QueryEmployeeAsync(dfoBrukerident: employeeContract.CaseManager))?.FirstOrDefault();
+        if (employeeContract == null)
+        {
+            _logger.LogWarning("Could not fetch employee contract on employee-ID {EmployeeId} with contract-ID {ContractId}, will not add case manager", contract.EmployeeId, contract.ContractId);
+        }
+        else caseManager = (await _dfoClient.QueryEmployeeAsync(dfoBrukerident: employeeContract.CaseManager))?.FirstOrDefault();
 
         DTO.SignedContractData uploadFileRequirements = new()
         {
