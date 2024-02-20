@@ -32,12 +32,13 @@ namespace ToaArchiver.Worker
             _telemetryClient = telemetryClient;
         }
 
-        public RabbitMqListenerService(IServiceScopeFactory serviceScopeFactory, ConnectionFactory connectionFactory, IOptionsMonitor<RabbitMqListenerOptions> options, ILogger<RabbitMqListenerService> logger)
+        public RabbitMqListenerService(IServiceScopeFactory serviceScopeFactory, ConnectionFactory connectionFactory, IOptionsMonitor<RabbitMqListenerOptions> options, ILogger<RabbitMqListenerService> logger, TelemetryClient telemetryClient)
         {
             _logger = logger;
             _serviceScopeFactory = serviceScopeFactory;
             _options = options;
             _connection = CreateConnection(connectionFactory);
+            _telemetryClient = telemetryClient;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -65,16 +66,15 @@ namespace ToaArchiver.Worker
 
         private async void MessageReceived(BasicDeliverEventArgs message)
         {
+            RequestTelemetry requestTelemetry = new() { Name = $"Process {_connection?.Endpoint}" };
+            requestTelemetry.Context.Operation.Id = message.BasicProperties.MessageId;
+            requestTelemetry.Context.Operation.ParentId = message.BasicProperties.CorrelationId;
+            using var operation = _telemetryClient.StartOperation(requestTelemetry);
+            _telemetryClient.TrackEvent("Message received", new Dictionary<string, string> {  { "RoutingKey", message.RoutingKey  } });
             _logger.LogInformation("Message received with routing key {RoutingKey}", message.RoutingKey);
             _logger.LogDebug("Message redelivered: {Redelivered}", message.Redelivered);
             _logger.LogDebug("Message redelivered: {MessageId}", message.BasicProperties.MessageId);
             _logger.LogDebug("Message redelivered: {CorrelationId}", message.BasicProperties.CorrelationId);
-
-            RequestTelemetry requestTelemetry = new() { Name = $"Process {_model?.CurrentQueue}" };
-            requestTelemetry.Context.Operation.Id = message.BasicProperties.MessageId;
-            requestTelemetry.Context.Operation.ParentId = message.BasicProperties.CorrelationId;
-            using var operation = _telemetryClient.StartOperation(requestTelemetry);
-            _telemetryClient.TrackEvent("Message received");
 
             try
             {
@@ -83,9 +83,9 @@ namespace ToaArchiver.Worker
 
                 IServiceScope serviceScope = _serviceScopeFactory.CreateScope();
                 var messageHandlerInvoker = serviceScope.ServiceProvider.GetRequiredService<IInvokeMessageHandler<byte[]>>();
-                IHandleMessage messageHandler = await messageHandlerInvoker.InvokeAsync(body);
-                RabbitMqListenerOptions currentOptions = _options.CurrentValue;
-                if (currentOptions.AckAllMessages || currentOptions.AckHandledMessages && messageHandler.Handled) _model?.BasicAck(message.DeliveryTag, false);
+                //IHandleMessage messageHandler = await messageHandlerInvoker.InvokeAsync(body);
+                //RabbitMqListenerOptions currentOptions = _options.CurrentValue;
+                //if (currentOptions.AckAllMessages || currentOptions.AckHandledMessages && messageHandler.Handled) _model?.BasicAck(message.DeliveryTag, false);
             }
             catch (Exception ex)
             {
