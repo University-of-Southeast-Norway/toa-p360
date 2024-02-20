@@ -11,15 +11,15 @@ public class ContractStatusChangedHandler : MessageHandlerBase<ContractStatusCha
 {
     private readonly IArchive _archive;
     private readonly IClient _dfoClient;
-    private readonly ILogger _logger;
+    private readonly ILogger<ContractStatusChangedHandler> _logger;
     private readonly IOptionsMonitor<ToaOptions> _options;
 
-    public ContractStatusChangedHandler(IArchive archive, IClient dfoClient, ContractStatusChangedMessage contractChangedMessage, IOptionsMonitor<ToaOptions> options, ILogger logger) : base(contractChangedMessage, logger)
+    public ContractStatusChangedHandler(IArchive archive, IClient dfoClient, ContractStatusChangedMessage contractChangedMessage, IOptionsMonitor<ToaOptions> options, ILoggerFactory loggerFactory) : base(contractChangedMessage, loggerFactory)
     {
         _archive = archive;
         _dfoClient = dfoClient;
         _options = options;
-        _logger = logger;
+        _logger = loggerFactory.CreateLogger<ContractStatusChangedHandler>();
     }
 
     protected override void Execute(ContractStatusChangedMessage contractChangedMessage)

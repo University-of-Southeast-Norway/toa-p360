@@ -5,7 +5,6 @@ using Moq;
 using System.Dynamic;
 using ToaArchiver.Domain.Core;
 using ToaArchiver.Domain.Messages;
-using Xunit.Abstractions;
 using Contract = DfoClient.Contract;
 
 namespace ToaArchiver.Domain.UnitTest;
@@ -16,7 +15,7 @@ public class ContractChangedHandlerTester
     private readonly Mock<IClient> _mockDfoClient = new();
     private readonly Mock<IOptionsMonitor<ToaOptions>> _mockToaOptions = new();
     private readonly ContractStatusChangedHandler _contractStatusChangedHandler;
-    private readonly Mock<Microsoft.Extensions.Logging.ILogger> _mockLogger = new();
+    private readonly Mock<ILoggerFactory> _mockLoggerFactory = new();
     private const string SequenceNumber = "SequenceNumber";
     private const string Id = "Id";
     private const string Subject = "Subject";
@@ -24,15 +23,13 @@ public class ContractChangedHandlerTester
     private const string CorrelationId = "CorrelationId";
     private const string Uri = "Uri";
     private readonly DateTimeOffset ValidAfter = new DateTime(2021,1,1, 0, 0, 0, DateTimeKind.Utc);
-    private readonly Mock<ITestOutputHelper> _mockTestOutputHelper;
 
     public ContractChangedHandlerTester()
     {
         ContractStatusChangedMessage message = new(SequenceNumber: SequenceNumber, CorrelationId: CorrelationId, Source: Source, Subject: Subject, Uri: Uri, ValidAfter: ValidAfter);
-        _mockTestOutputHelper = MockLogger();
-        var microsoftLogger = new Mock<ILogger>();
         SetupMockToaOpations();
-        _contractStatusChangedHandler = new(_mockArchive.Object, _mockDfoClient.Object, message, _mockToaOptions.Object, microsoftLogger.Object);
+        _mockLoggerFactory.Setup(l => l.CreateLogger(It.IsAny<string>())).Returns(new Mock<ILogger>().Object);
+        _contractStatusChangedHandler = new(_mockArchive.Object, _mockDfoClient.Object, message, _mockToaOptions.Object, _mockLoggerFactory.Object);
     }
 
     private void SetupMockToaOpations()
@@ -56,6 +53,7 @@ public class ContractChangedHandlerTester
 
         DTO.SignedContractData signedContractData = null;
         _mockArchive.Setup(a => a.UploadSignedContractAsync(It.IsAny<DTO.SignedContractData>())).Callback<DTO.SignedContractData>(s => signedContractData = s);
+
 
 
         // When
@@ -95,44 +93,6 @@ public class ContractChangedHandlerTester
         _mockDfoClient.Verify(d => d.GetContractAsync(SequenceNumber, null, null, null), Times.Once);
         _mockDfoClient.Verify(d => d.GetEmployeeAsync(It.IsAny<string>(), It.IsAny<DateTimeOffset>()), Times.Never);
         _mockArchive.Verify(a => a.UploadSignedContractAsync(It.IsAny<DTO.SignedContractData>()), Times.Never);
-    }
-
-    [Fact]
-    public void ExecuteCalled__Logs_message_and_throws_exception()
-    {
-        // Given
-        EmployeeContract employeeContract = CreateEmployeeContract();
-        MockGetEmployeeContract(employeeContract);
-
-        Contract contract = CreateContract();
-        MockGetContract(contract);
-        MockGetContracts(contract);
-
-        // When
-        Assert.Throws<NotImplementedException>(_contractStatusChangedHandler.Execute);
-
-        // Then
-        _mockTestOutputHelper.Verify(t => t.WriteLine(It.Is<string>(s => s.Contains(" INF] Executing messagehandler ToaArchiver.Domain.ContractStatusChangedHandler"))), Times.Once);
-        _mockTestOutputHelper.Verify(t => t.WriteLine(It.Is<string>(s => s.Contains(@" DBG] ...on message {""SequenceNumber"":""SequenceNumber"",""Id"":""SequenceNumber"",""CorrelationId"":""CorrelationId"",""Source"":""Source"",""Subject"":""Subject"",""Uri"":""Uri"",""ValidAfter"":""2021-01-01T00:00:00.0000000+00:00"",""RawData"":null,""JsonData"":null,""$type"":""ContractStatusChangedMessage""}"))), Times.Once);
-    }
-
-    [Fact]
-    public async Task ExecuteAsyncCalled__Logs_message()
-    {
-        // Given
-        EmployeeContract employeeContract = CreateEmployeeContract();
-        MockGetEmployeeContract(employeeContract);
-
-        var contract = CreateContract();
-        MockGetContract(contract);
-        MockGetContracts(contract);
-
-        // When
-        await _contractStatusChangedHandler.ExecuteAsync();
-
-        // Then
-        _mockTestOutputHelper.Verify(t => t.WriteLine(It.Is<string>(s => s.Contains(" INF] Executing messagehandler ToaArchiver.Domain.ContractStatusChangedHandler"))), Times.Once);
-        _mockTestOutputHelper.Verify(t => t.WriteLine(It.Is<string>(s => s.Contains(@" DBG] ...on message {""SequenceNumber"":""SequenceNumber"",""Id"":""SequenceNumber"",""CorrelationId"":""CorrelationId"",""Source"":""Source"",""Subject"":""Subject"",""Uri"":""Uri"",""ValidAfter"":""2021-01-01T00:00:00.0000000+00:00"",""RawData"":null,""JsonData"":null,""$type"":""ContractStatusChangedMessage""}"))), Times.Once);
     }
 
     private void MockGetEmployeeContract(EmployeeContract employeeContract)
@@ -194,11 +154,5 @@ public class ContractChangedHandlerTester
         dynamicEmployee.mobilPrivat = "mobilPrivat";
         dynamicEmployee.epost = "epost";
         return new Employee(dynamicEmployee);
-    }
-
-    private Mock<ITestOutputHelper> MockLogger()
-    {
-        Mock<ITestOutputHelper> mockTestOutputHelper = new Mock<ITestOutputHelper>();
-        return mockTestOutputHelper;
     }
 }

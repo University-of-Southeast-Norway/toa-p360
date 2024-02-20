@@ -15,15 +15,17 @@ public class RabbitMqMessageParser : IParseMessage<byte[]>
 {
     private readonly IArchive _archive;
     private readonly ILogger<RabbitMqMessageParser> _logger;
+    private readonly ILoggerFactory _loggerFactory;
     private readonly IClient _dfoClient;
     private readonly IServiceProvider _serviceProvider;
 
-    public RabbitMqMessageParser(IClient dfoClient, IArchive archive, IServiceProvider serviceProvider, ILogger<RabbitMqMessageParser> logger)
+    public RabbitMqMessageParser(IClient dfoClient, IArchive archive, IServiceProvider serviceProvider, ILoggerFactory loggerFactory)
     {
         _dfoClient = dfoClient;
         _archive = archive;
         _serviceProvider = serviceProvider;
-        _logger = logger;
+        _logger = loggerFactory.CreateLogger<RabbitMqMessageParser>();
+        _loggerFactory = loggerFactory;
     }
 
     public IHandleMessage Parse(byte[] message)
@@ -43,10 +45,10 @@ public class RabbitMqMessageParser : IParseMessage<byte[]>
         }
         string uri = (string)messageObj.uri;
 
-        if (!uri.ToLower().Contains("infokontrakter/filer")) return new DefaultMessageHandler(messageString, _logger);
+        if (!uri.ToLower().Contains("infokontrakter/filer")) return new DefaultMessageHandler(messageString, _loggerFactory);
 
         var felternavn = messageObj.feltnavn as JArray;
-        if (felternavn?.Any(f => f.ToString() == "status") == false) return new DefaultMessageHandler(messageString, _logger);
+        if (felternavn?.Any(f => f.ToString() == "status") == false) return new DefaultMessageHandler(messageString, _loggerFactory);
 
         string id = (string)messageObj.id;
         string validAfter = (string)messageObj.gyldigEtter;
@@ -59,6 +61,6 @@ public class RabbitMqMessageParser : IParseMessage<byte[]>
             RawData = messageString
         };
         var options = _serviceProvider.GetRequiredService<IOptionsMonitor<ToaOptions>>();
-        return new ContractStatusChangedHandler(_archive, _dfoClient, contratChangedMessage, options, _logger);
+        return new ContractStatusChangedHandler(_archive, _dfoClient, contratChangedMessage, options, _loggerFactory);
     }
 }

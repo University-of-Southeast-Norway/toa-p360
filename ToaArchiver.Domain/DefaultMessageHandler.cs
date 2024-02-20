@@ -7,7 +7,7 @@ public class DefaultMessageHandler : MessageHandlerBase<string>
 {
     private string message;
 
-    public DefaultMessageHandler(string message, ILogger logger) : base(message, logger)
+    public DefaultMessageHandler(string message, ILoggerFactory loggerFactory) : base(message, loggerFactory)
     {
         this.message = message;
     }
