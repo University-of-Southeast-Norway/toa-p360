@@ -83,9 +83,9 @@ namespace ToaArchiver.Worker
 
                 IServiceScope serviceScope = _serviceScopeFactory.CreateScope();
                 var messageHandlerInvoker = serviceScope.ServiceProvider.GetRequiredService<IInvokeMessageHandler<byte[]>>();
-                //IHandleMessage messageHandler = await messageHandlerInvoker.InvokeAsync(body);
-                //RabbitMqListenerOptions currentOptions = _options.CurrentValue;
-                //if (currentOptions.AckAllMessages || currentOptions.AckHandledMessages && messageHandler.Handled) _model?.BasicAck(message.DeliveryTag, false);
+                IHandleMessage messageHandler = await messageHandlerInvoker.InvokeAsync(body);
+                RabbitMqListenerOptions currentOptions = _options.CurrentValue;
+                if (currentOptions.AckAllMessages || currentOptions.AckHandledMessages && messageHandler.Handled) _model?.BasicAck(message.DeliveryTag, false);
             }
             catch (Exception ex)
             {
