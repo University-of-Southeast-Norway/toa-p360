@@ -45,7 +45,8 @@ public class ContractStatusChangedHandler : MessageHandlerBase<ContractStatusCha
             return;
         }
 
-        Employee employee = await _dfoClient.GetEmployeeAsync(contract.EmployeeId, contractChangedMessage.ValidAfter);
+        DateTimeOffset searchDate = contractChangedMessage.ValidAfter > DateTimeOffset.Now.Date ? DateTimeOffset.Now.Date : contractChangedMessage.ValidAfter;
+        Employee employee = await _dfoClient.GetEmployeeAsync(contract.EmployeeId, searchDate);
         if (employee == null)
         {
             _logger.LogWarning("Could not fetch employee on employee-ID {EmployeeId}", contract.EmployeeId);
