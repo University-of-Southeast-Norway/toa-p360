@@ -57,7 +57,7 @@ public class RabbitMqMessageParser : IParseMessage<byte[]>
         {
             Uri = uri,
             Id = id,
-            ValidAfter = DateTimeOffset.Parse(validAfter),
+            ValidAfter = DateTimeOffset.TryParse(validAfter, out DateTimeOffset result) ? result : DateTimeOffset.Now,
             RawData = messageString
         };
         var options = _serviceProvider.GetRequiredService<IOptionsMonitor<ToaOptions>>();
