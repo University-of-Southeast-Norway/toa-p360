@@ -45,7 +45,7 @@ public class RabbitMqMessageParser : IParseMessage<byte[]>
         }
         string uri = (string)messageObj.uri;
 
-        if (!uri.ToLower().Contains("infokontrakter/filer")) return new DefaultMessageHandler(messageString, _loggerFactory);
+        if (!uri.Contains("infokontrakter/filer", StringComparison.CurrentCultureIgnoreCase)) return new DefaultMessageHandler(messageString, _loggerFactory);
 
         var felternavn = messageObj.feltnavn as JArray;
         if (felternavn?.Any(f => f.ToString() == "status") == false) return new DefaultMessageHandler(messageString, _loggerFactory);

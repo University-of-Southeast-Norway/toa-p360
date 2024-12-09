@@ -42,9 +42,20 @@ public static class HostConfigurationExtension
             .AddP360Client("P360").UseDefaultClientResources().Services
             .AddP360Factory().UseJsonTemplateRepository().Services
             .AddScoped<IArchive, P360Archive>()
-            .AddScoped<IParseMessage<byte[]>, RabbitMqMessageParser>()
+            .AddScoped<RabbitMqMessageParser>()
+            .AddScoped<CleanMessagesParser>()
+            .AddScoped<IParseMessage<byte[]>>(ConfigureParser)
             .AddScoped<IInvokeMessageHandler<byte[]>, MessageHandlerInvoker<byte[]>>()
             ;
+
+    private static IParseMessage<byte[]> ConfigureParser(IServiceProvider provider)
+    {
+        IOptions<ToaOptions> options = provider.GetRequiredService<IOptions<ToaOptions>>();
+        if (nameof(CleanMessagesParser).Contains(options.Value.MessageParser, StringComparison.InvariantCultureIgnoreCase))
+            return provider.GetRequiredService<CleanMessagesParser>();
+
+        return provider.GetRequiredService<RabbitMqMessageParser>();
+    }
 
     private static IClient CreateDfoClient(IServiceProvider serviceProvider)
     {

@@ -24,7 +24,7 @@ public class ContractStatusChangedHandler : MessageHandlerBase<ContractStatusCha
 
     protected override void Execute(ContractStatusChangedMessage contractChangedMessage)
     {
-        throw new NotImplementedException("This message handler is based on async logic.");
+        ExecuteAsync().RunSynchronously();
     }
 
     protected override async Task ExecuteAsync(ContractStatusChangedMessage contractChangedMessage)
