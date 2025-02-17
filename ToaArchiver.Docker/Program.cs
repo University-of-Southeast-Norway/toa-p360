@@ -4,6 +4,9 @@ using ToaArchiver.Worker.Extensions;
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureToaServices()
     .ConfigureServices(ConfigureHostedService)
+#if DEBUG
+    .ConfigureAppConfiguration(c => c.AddUserSecrets<Program>())
+#endif
     .Build();
 
 var logger = host.Services.GetRequiredService<ILogger<Program>>();

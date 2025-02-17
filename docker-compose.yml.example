@@ -1,0 +1,38 @@
+version: '3'
+services:
+  backend:
+    platform: linux/amd64
+    container_name: toa-archiver
+    image: toa-archiver
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PAT: "<Add-String-Here>"
+    ports:
+      - "7071:7071"
+    environment:
+      "P360:ClientOptions:AdContextUser": "<Add-String-Here>"
+      "P360:ClientOptions:BaseAddress": "<Add-String-Here>"
+      "P360:ClientOptions:ApiKey": "<Add-String-Here>"
+      "Dfo:Queue:AckHandledMessages": false
+      "Dfo:Queue:AckAllMessages": false
+      "Dfo:Queue:Scheme": "amqps"
+      "Dfo:Queue:Queue": "<Add-String-Here>"
+      "Dfo:Queue:VirtualHost": "<Add-String-Here>"
+      "Dfo:Queue:Host": "<Add-String-Here>"
+      "Dfo:Queue:Port": 5671
+      "Dfo:Queue:User": "<Add-String-Here>"
+      "Dfo:Queue:Password": "<Add-String-Here>"
+      "Dfo:Api:BaseAddress": "<Add-String-Here>"
+      "Dfo:ApiKeys:[0]:scope": "dfo:ansatte"
+      "Dfo:ApiKeys:[0]:header": "X-Gravitee-Api-Key"
+      "Dfo:ApiKeys:[0]:key": "<Add-String-Here>"
+      "Dfo:ApiKeys:[1]:scope": "dfo:ansatte/infokontrakter"
+      "Dfo:ApiKeys:[1]:header": "X-Gravitee-Api-Key"
+      "Dfo:ApiKeys:[1]:key": "<Add-String-Here>"
+      "Dfo:ApiKeys:[2]:scope": "dfo:infokontrakter/filer"
+      "Dfo:ApiKeys:[2]:header": "X-Gravitee-Api-Key"
+      "Dfo:ApiKeys:[2]:key": "<Add-String-Here>"
+      "ApplicationInsights:ConnectionString": "<Add-String-Here>"
+    # command: dotnet ToaArchiver.Docker.dll
