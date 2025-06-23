@@ -11,6 +11,8 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using ToaArchiver.Domain;
+using P360Client.Extensions;
+using Microsoft.Extensions.Configuration;
 
 namespace ToaArchiver.Worker.Extensions;
 
@@ -18,15 +20,34 @@ public static class HostConfigurationExtension
 {
     public static IHostBuilder ConfigureToaServices(this IHostBuilder source)
     {
-        return source.ConfigureServices(ConfigureServices)
+        return source
+            .ConfigureServices(ConfigureServices)
+            .ConfigureServices(ConfigureP360)
             .ConfigureServices(ConfigureOptions)
             ;
+    }
+
+    private static void ConfigureP360(HostBuilderContext context, IServiceCollection collection)
+    {
+        IP360ClientBuilder builder = collection.AddP360Client();
+        const string p360SectionName = "P360";
+        var p360Section = context.Configuration.GetSection(p360SectionName);
+        IConfigurationSection intarkSection = p360Section.GetSection("Intark");
+        if (intarkSection.Exists())
+        {
+            builder.UseP360ApiWithIntArk($"{p360SectionName}:Intark");
+        }
+        else
+        {
+            builder.UseDefaultClientResources($"{p360SectionName}:Sif");
+        }
+        collection.AddP360Factory()
+            .UseJsonTemplateRepository();
     }
 
     static void ConfigureOptions(HostBuilderContext hostingContext, IServiceCollection services)
     {
         var configurationRoot = hostingContext.Configuration;
-        services.Configure<P360Client.Configurations.ClientOptions>(configurationRoot.GetSection(key: "P360:ClientOptions"));
         services.Configure<P360ArchiveOptions>(configurationRoot.GetSection(key: "P360:Archive"));
         services.Configure<DfoClientOptions>(configurationRoot.GetSection(key: "Dfo:Api"));
         services.Configure<MaskinportenTokenResolverOptions>(configurationRoot.GetSection(key: "Dfo:Maskinporten"));
@@ -39,12 +60,10 @@ public static class HostConfigurationExtension
             .AddSingleton<ITokenResolver, MaskinportenTokenResolver>()
             .AddSingleton(SetUpConnectionFactory)
             .AddScoped(CreateDfoClient)
-            .AddP360Client("P360").UseDefaultClientResources().Services
-            .AddP360Factory().UseJsonTemplateRepository().Services
             .AddScoped<IArchive, P360Archive>()
             .AddScoped<RabbitMqMessageParser>()
             .AddScoped<CleanMessagesParser>()
-            .AddScoped<IParseMessage<byte[]>>(ConfigureParser)
+            .AddScoped(ConfigureParser)
             .AddScoped<IInvokeMessageHandler<byte[]>, MessageHandlerInvoker<byte[]>>()
             ;
 

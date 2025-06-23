@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using P360Client.Domain;
 using P360Client.Domain.Factory;
 using P360Client.Domain.Model;
+using P360Client.DTO;
 using ToaArchiver.Domain.Core;
 using ToaArchiver.Domain.DTO;
 
@@ -28,7 +29,7 @@ namespace ToaArchiver.Archives.P360
 
         public async Task UploadSignedContractAsync(SignedContractData uploadFileRequirements)
         {
-            PrivatePerson contactReference = new()
+            P360Client.Domain.Model.PrivatePerson caseOwner = new()
             {
                 Nin = uploadFileRequirements.SocialSecurityNumber,
                 FirstName = uploadFileRequirements.FirstName,
@@ -41,21 +42,24 @@ namespace ToaArchiver.Archives.P360
                 Email = uploadFileRequirements.Email
             };
 
-            FileContent fileInput = new ()
+            NewDocumentFile fileInput = new ()
             {
                 Title = $"Signert avtale {uploadFileRequirements.SequenceNumber}",
                 Format = "pdf",
                 Note = Utility.CreateChecksum(uploadFileRequirements.FileContent!),
-                Base64FileContent = uploadFileRequirements.FileContent!
+                Base64Data = uploadFileRequirements.FileContent!
             };
             try
             {
-                var builder = _caseFactory.CreateBuilderForTemplate("");
-                builder.AppendTo(contactReference);
-                IDocumentBuilder documentBuilder = builder.AddDocument("", fileInput);
+                const string TemplateId = "toa";
+                ICaseBuilder builder = _caseFactory.CreateBuilderForTemplate(TemplateId);
+                builder.Synchronize();
+                builder.UpdateToPreferredState();
+                builder.AttachTo(caseOwner, true);
+                IDocumentBuilder documentBuilder = builder.AddDocument(TemplateId);
                 documentBuilder
-                    .AppendFiles().SignOff()
-                    .AppendPrivatePersonReference("Avsender", contactReference, false, false);
+                    .AddFile(fileInput).SignOff()
+                    .AddPrivatePersonAsContact("Avsender", caseOwner, false, null);
                 if (!string.IsNullOrEmpty(uploadFileRequirements.CaseManagerId ?? uploadFileRequirements.CaseManagerEmail))
                 {
                     UniqueQueryAttributesTemplate? responsibleTemplate = _options.Responsible;
@@ -67,7 +71,7 @@ namespace ToaArchiver.Archives.P360
                         ExternalId = externalId?.Replace("{dfo.caseManager.id}", uploadFileRequirements.CaseManagerId!)?.Replace("{dfo.caseManager.email}", uploadFileRequirements.CaseManagerEmail!),
                         Email = email?.Replace("{dfo.caseManager.id}", uploadFileRequirements.CaseManagerId!)?.Replace("{dfo.caseManager.email}", uploadFileRequirements.CaseManagerEmail!)
                     };
-                    documentBuilder.AddContactPersonReference("Mottaker", personReference, true, true);
+                    documentBuilder.AddContactPersonAsContact("Mottaker", personReference, false, null);
                 }
                 if (uploadFileRequirements.SignedDate.HasValue) documentBuilder.WithDocumentDate(uploadFileRequirements.SignedDate.Value);
                 await builder.Build().SubmitAsync();
