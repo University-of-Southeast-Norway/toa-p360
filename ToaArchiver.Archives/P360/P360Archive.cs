@@ -55,7 +55,7 @@ namespace ToaArchiver.Archives.P360
                 ICaseBuilder builder = _caseFactory.CreateBuilderForTemplate(TemplateId);
                 builder.Synchronize();
                 builder.UpdateToPreferredState();
-                builder.AttachTo(caseOwner, true);
+                builder.AttachTo(caseOwner);
                 IDocumentBuilder documentBuilder = builder.AddDocument(TemplateId);
                 documentBuilder
                     .AddFile(fileInput).SignOff()
