@@ -112,14 +112,23 @@ Konfigurasjon av miljø variable settes opp i en fil kaldt _appsettings.json_. D
 
 ### Parametere:
 ```
+P360:Intark:
+// Seksjonen Sif settes opp ved direkte tilkobling mot P360 API. Seksjonen Intark settes dersom tilkobling til P360 går via IntArk.
+
+// Endepunkt til P3560 API i IntArk
+P360:Intark:service_name:BaseAddress
+
+// Passord til P3560 API i IntArk
+P360:Intark:service_name:ApiKey
+
 // Service bruker som benyttes ved kobling mot P360 API.
-P360:ClientOptions:AdContextUser
+P360:Sif:AdContextUser
 
 // https://{institusjon}.public360online.com.
-P360:ClientOptions:BaseAddress
+P360:Sif:BaseAddress
 
 // API nøkkel/passord som brukes til å koble mot P360.
-P360:ClientOptions:ApiKey
+P360:Sif:ApiKey
 
 // Settes til første dato denne løsningen ble tatt i bruk. Dersom løsningen for batch-vis overføring er benyttet for å hente historiske data, settes denne til samme dato som ble benyttet ved batch-vis overføring.
 AppendCaseOptions:InProductionDate
