@@ -58,7 +58,7 @@ namespace ToaArchiver.Archives.P360
                 builder.AttachTo(caseOwner);
                 IDocumentBuilder documentBuilder = builder.AddDocument(TemplateId);
                 documentBuilder
-                    .AddFile(fileInput).SignOff()
+                    .AddFile(fileInput).OnlyAddFileIf(NoExistingFilesMatchingNote).SignOff()
                     .AddPrivatePersonAsContact("Avsender", caseOwner, false, null);
                 if (!string.IsNullOrEmpty(uploadFileRequirements.CaseManagerId ?? uploadFileRequirements.CaseManagerEmail))
                 {
@@ -81,6 +81,11 @@ namespace ToaArchiver.Archives.P360
                 _logger.LogError(ex, "Failed to upload contract to Public 360");
                 throw;
             }
+        }
+
+        private Task<bool> NoExistingFilesMatchingNote(NewDocumentFile fileToUpload, IEnumerable<P360Client.DTO.File> existingFiles)
+        {
+            return Task.FromResult(existingFiles.All(ef => ef.Note != fileToUpload.Note));
         }
     }
 }
