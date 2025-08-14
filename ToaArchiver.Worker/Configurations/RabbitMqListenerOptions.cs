@@ -11,5 +11,6 @@
         public string Queue { get; set; }
         public bool AckAllMessages { get; set; }
         public bool AckHandledMessages { get; set; }
+        public int MaxSimultaneousMessages { get; set; }
     }
 }

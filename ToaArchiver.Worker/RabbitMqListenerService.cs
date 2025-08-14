@@ -22,6 +22,7 @@ namespace ToaArchiver.Worker
         private IModel? _model;
         private EventingBasicConsumer? _consumer;
         private static readonly SemaphoreSlim _theLock = new(1,1);
+        private static int _currentCount = 0;
 
         public RabbitMqListenerService(IServiceScopeFactory serviceScopeFactory, IConnection connection, IOptionsMonitor<RabbitMqListenerOptions> options, ILogger<RabbitMqListenerService> logger, TelemetryClient telemetryClient)
         {
@@ -66,6 +67,11 @@ namespace ToaArchiver.Worker
 
         private async void MessageReceived(BasicDeliverEventArgs message)
         {
+            if (_currentCount >= _options.CurrentValue.MaxSimultaneousMessages)
+            {
+                _model?.BasicNack(message.DeliveryTag, false, true);
+                return;
+            }
             RequestTelemetry requestTelemetry = new() { Name = $"Process {_connection?.Endpoint}" };
             requestTelemetry.Context.Operation.Id = message.BasicProperties.MessageId;
             requestTelemetry.Context.Operation.ParentId = message.BasicProperties.CorrelationId;
@@ -78,6 +84,7 @@ namespace ToaArchiver.Worker
 
             try
             {
+                _currentCount++;
                 byte[] body = message.Body.ToArray();
                 await _theLock.WaitAsync();
 
@@ -95,6 +102,7 @@ namespace ToaArchiver.Worker
             }
             finally
             {
+                _currentCount--;
                 _theLock.Release();
             }
         }
