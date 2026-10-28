@@ -152,6 +152,17 @@ Dfo:Queue:Retry:InProcessAttempts
 // Forsinkelse før første nye forsøk i prosessen, dobles for hvert forsøk. Standard 00:00:02.
 Dfo:Queue:Retry:InProcessDelay
 
+// Hva som skjer når en melding ikke kunne håndteres etter forsøkene i prosessen.
+// Requeue (standard): meldingen legges tilbake på køen med en gang (tidligere oppførsel).
+// Broker: meldingen legges på en ventekø '<Queue>.retry.<sekunder>s' og kommer tilbake til køen etter forsinkelsen. Når MaxAttempts er nådd, legges den på '<Queue>.parking'. Krever rettighet til å opprette og publisere til køer på vhost.
+Dfo:Queue:Retry:Mode
+
+// Forsinkelse per nytt forsøk i Broker-modus, f.eks. ["00:01:00", "00:10:00", "01:00:00", "06:00:00"] (standard). Siste verdi brukes for resterende forsøk.
+Dfo:Queue:Retry:Delays
+
+// Antall nye forsøk i Broker-modus før meldingen parkeres. Standard 10.
+Dfo:Queue:Retry:MaxAttempts
+
 // Meldingskø satt opp av DFØ.
 Dfo:Queue:Queue
 

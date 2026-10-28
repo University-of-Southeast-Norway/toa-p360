@@ -24,6 +24,7 @@ namespace ToaArchiver.Worker
         private IModel? _model;
         private AsyncEventingBasicConsumer? _consumer;
         private CancellationToken _stoppingToken;
+        private BrokerRetryScheduler? _retryScheduler;
 
         public RabbitMqListenerService(IServiceScopeFactory serviceScopeFactory, IConnection connection, IOptionsMonitor<RabbitMqListenerOptions> options, ILogger<RabbitMqListenerService> logger, TelemetryClient telemetryClient)
         {
@@ -48,6 +49,13 @@ namespace ToaArchiver.Worker
             _stoppingToken = stoppingToken;
             _model = InitModel();
             _model.BasicQos(prefetchSize: 0, prefetchCount: (ushort)Math.Clamp(_options.CurrentValue.MaxSimultaneousMessages, 0, ushort.MaxValue), global: false);
+            if (_options.CurrentValue.Retry.Mode == RetryMode.Broker)
+            {
+                _model.ConfirmSelect();
+                _retryScheduler = new BrokerRetryScheduler(_model, _options.CurrentValue.Queue, _options.CurrentValue.Retry);
+                _retryScheduler.DeclareTopology();
+                _logger.LogInformation("Broker retry enabled, parking queue {ParkingQueue}", _retryScheduler.ParkingQueue);
+            }
             _consumer = new AsyncEventingBasicConsumer(_model);
             _consumer.Received += (model, ea) => MessageReceived(ea);
             _model.BasicConsume(queue: _options.CurrentValue.Queue, autoAck: false, consumer: _consumer);
@@ -112,9 +120,32 @@ namespace ToaArchiver.Worker
                     break;
                 case MessageHandlingOutcome.Retry:
                     _telemetryClient.TrackEvent("Message retry", new Dictionary<string, string> { { "RoutingKey", message.RoutingKey }, { "Reason", result.Reason ?? "" } });
-                    _logger.LogWarning("Message {MessageId} will be retried: {Reason}", message.BasicProperties.MessageId, result.Reason);
+                    if (_retryScheduler != null && ackEnabled && TryScheduleRetry(message, result.Reason)) break;
+                    _logger.LogWarning("Message {MessageId} will be requeued: {Reason}", message.BasicProperties.MessageId, result.Reason);
                     _model?.BasicNack(message.DeliveryTag, false, true);
                     break;
+            }
+        }
+
+        private bool TryScheduleRetry(BasicDeliverEventArgs message, string? reason)
+        {
+            try
+            {
+                string target = _retryScheduler!.Schedule(message, reason);
+                _model?.BasicAck(message.DeliveryTag, false);
+                if (target == _retryScheduler.ParkingQueue)
+                {
+                    _telemetryClient.TrackEvent("Message parked", new Dictionary<string, string> { { "RoutingKey", message.RoutingKey }, { "Reason", reason ?? "" } });
+                    _logger.LogError("Message {MessageId} parked in {ParkingQueue} after {Retries} retries: {Reason}", message.BasicProperties.MessageId, target, BrokerRetryScheduler.GetAttempt(message.BasicProperties), reason);
+                }
+                else _logger.LogWarning("Message {MessageId} scheduled for retry via {WaitQueue}: {Reason}", message.BasicProperties.MessageId, target, reason);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+                _logger.LogError(ex, "Could not schedule retry for message {MessageId}", message.BasicProperties.MessageId);
+                return false;
             }
         }
 

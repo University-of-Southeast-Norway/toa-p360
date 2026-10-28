@@ -15,9 +15,18 @@
         public RetryOptions Retry { get; set; } = new();
     }
 
+    public enum RetryMode
+    {
+        Requeue,
+        Broker
+    }
+
     public class RetryOptions
     {
         public int InProcessAttempts { get; set; } = 3;
         public TimeSpan InProcessDelay { get; set; } = TimeSpan.FromSeconds(2);
+        public RetryMode Mode { get; set; } = RetryMode.Requeue;
+        public TimeSpan[]? Delays { get; set; }
+        public int MaxAttempts { get; set; } = 10;
     }
 }
