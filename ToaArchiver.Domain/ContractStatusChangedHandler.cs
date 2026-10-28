@@ -27,7 +27,7 @@ public class ContractStatusChangedHandler : MessageHandlerBase<ContractStatusCha
         ExecuteAsync().RunSynchronously();
     }
 
-    protected override async Task ExecuteAsync(ContractStatusChangedMessage contractChangedMessage)
+    protected override async Task<MessageHandlingResult> ExecuteAsync(ContractStatusChangedMessage contractChangedMessage)
     {
         string sequenceNumber = contractChangedMessage.SequenceNumber;
         Contract contract = await _dfoClient.GetContractAsync(sequenceNumber);
@@ -35,14 +35,14 @@ public class ContractStatusChangedHandler : MessageHandlerBase<ContractStatusCha
         if (contract == null)
         {
             _logger.LogWarning("Could not fetch contract on sequence number {ContractSequenceNumber}", sequenceNumber);
-            return;
+            return MessageHandlingResult.Retry($"Could not fetch contract on sequence number {sequenceNumber}");
         }
 
         _logger.LogInformation("Contract with sequence number {ContractSequenceNumber} has status {ContractStatus}", sequenceNumber, contract.Status);
         if (!IsContractSigned(contract))
         {
             _logger.LogInformation("Contract on sequence number {ContractSequenceNumber} is not signed", sequenceNumber);
-            return;
+            return MessageHandlingResult.Handled();
         }
 
         DateTimeOffset searchDate = contractChangedMessage.ValidAfter > DateTimeOffset.Now.Date ? DateTimeOffset.Now.Date : contractChangedMessage.ValidAfter;
@@ -50,7 +50,7 @@ public class ContractStatusChangedHandler : MessageHandlerBase<ContractStatusCha
         if (employee == null)
         {
             _logger.LogWarning("Could not fetch employee on employee-ID {EmployeeId}", contract.EmployeeId);
-            return;
+            return MessageHandlingResult.Retry($"Could not fetch employee on employee-ID {contract.EmployeeId}");
         }
 
         Employee? caseManager = null;
@@ -78,12 +78,11 @@ public class ContractStatusChangedHandler : MessageHandlerBase<ContractStatusCha
             CaseManagerEmail = caseManager?.Email
         };
         await _archive.UploadSignedContractAsync(uploadFileRequirements);
+        return MessageHandlingResult.Handled();
     }
 
     private bool IsContractSigned(Contract contract)
     {
         return contract.Status?.ContainsAny(_options.CurrentValue.ContractSignedStatuses!) == true;
     }
-
-    protected override bool HandlesMessages() => true;
 }

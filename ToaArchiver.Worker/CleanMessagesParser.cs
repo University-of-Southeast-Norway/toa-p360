@@ -33,14 +33,15 @@ public class CleanMessagesParser : IParseMessage<byte[]>
         dynamic messageObj;
         try
         {
-            messageObj = JToken.Parse(messageString);
+            messageObj = JObject.Parse(messageString);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Could not parse message {MessageString}", messageString);
-            throw;
+            return new RejectedMessageHandler(messageString, "Message is not a valid JSON object", _loggerFactory);
         }
-        string uri = (string)messageObj.uri;
+        string? uri = (string?)messageObj.uri;
+        if (string.IsNullOrEmpty(uri)) return new RejectedMessageHandler(messageString, "Message has no uri", _loggerFactory);
 
         if (!uri.Contains("infokontrakter/filer", StringComparison.CurrentCultureIgnoreCase)) return new AckMessageHandler(messageString, _loggerFactory);
         return new DefaultMessageHandler(messageString, _loggerFactory);

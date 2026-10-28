@@ -57,9 +57,10 @@ public class ContractChangedHandlerTester
 
 
         // When
-        await _contractStatusChangedHandler.ExecuteAsync();
+        MessageHandlingResult result = await _contractStatusChangedHandler.ExecuteAsync();
 
         // Then
+        Assert.Equal(MessageHandlingOutcome.Handled, result.Outcome);
         _mockDfoClient.Verify(d => d.GetContractAsync(SequenceNumber, null, null, null), Times.Once);
         _mockDfoClient.Verify(d => d.GetEmployeeAsync(contract.EmployeeId, ValidAfter), Times.Once);
         _mockArchive.Verify(a => a.UploadSignedContractAsync(It.IsAny<DTO.SignedContractData>()), Times.Once);
@@ -87,11 +88,41 @@ public class ContractChangedHandlerTester
         MockGetContract(contract);
 
         // When
-        await _contractStatusChangedHandler.ExecuteAsync();
+        MessageHandlingResult result = await _contractStatusChangedHandler.ExecuteAsync();
 
         // Then
+        Assert.Equal(MessageHandlingOutcome.Handled, result.Outcome);
         _mockDfoClient.Verify(d => d.GetContractAsync(SequenceNumber, null, null, null), Times.Once);
         _mockDfoClient.Verify(d => d.GetEmployeeAsync(It.IsAny<string>(), It.IsAny<DateTimeOffset>()), Times.Never);
+        _mockArchive.Verify(a => a.UploadSignedContractAsync(It.IsAny<DTO.SignedContractData>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_called__With_contract_not_found__Returns_Retry()
+    {
+        // Given
+        MockGetContract(null!);
+
+        // When
+        MessageHandlingResult result = await _contractStatusChangedHandler.ExecuteAsync();
+
+        // Then
+        Assert.Equal(MessageHandlingOutcome.Retry, result.Outcome);
+        _mockArchive.Verify(a => a.UploadSignedContractAsync(It.IsAny<DTO.SignedContractData>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_called__With_employee_not_found__Returns_Retry()
+    {
+        // Given
+        MockGetContract(CreateContract("520"));
+        MockGetEmployee(null!);
+
+        // When
+        MessageHandlingResult result = await _contractStatusChangedHandler.ExecuteAsync();
+
+        // Then
+        Assert.Equal(MessageHandlingOutcome.Retry, result.Outcome);
         _mockArchive.Verify(a => a.UploadSignedContractAsync(It.IsAny<DTO.SignedContractData>()), Times.Never);
     }
 

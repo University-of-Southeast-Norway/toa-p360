@@ -8,10 +8,6 @@ public abstract class MessageHandlerBase<T> : IHandleMessage
     private readonly T _message;
     private readonly ILogger<MessageHandlerBase<T>> _logger;
 
-    public bool Handled => HandlesMessages();
-
-    protected abstract bool HandlesMessages();
-
     protected MessageHandlerBase(T message, ILoggerFactory loggerFactory)
     {
         _message = message;
@@ -26,11 +22,11 @@ public abstract class MessageHandlerBase<T> : IHandleMessage
     }
     protected abstract void Execute(T message);
 
-    public async Task ExecuteAsync()
+    public async Task<MessageHandlingResult> ExecuteAsync()
     {
         _logger.LogInformation("Executing messagehandler {HandlerType}", GetType());
         _logger.LogDebug("...on message {Message}", _message);
-        await ExecuteAsync(_message);
+        return await ExecuteAsync(_message);
     }
-    protected abstract Task ExecuteAsync(T message);
+    protected abstract Task<MessageHandlingResult> ExecuteAsync(T message);
 }

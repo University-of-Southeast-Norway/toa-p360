@@ -3,5 +3,5 @@
 public interface IInvokeMessageHandler<TMessage>
 {
     IHandleMessage Invoke(TMessage message);
-    Task<IHandleMessage> InvokeAsync(TMessage message);
+    Task<MessageHandlingResult> InvokeAsync(TMessage message);
 }
