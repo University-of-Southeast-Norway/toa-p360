@@ -143,6 +143,9 @@ Dfo:Queue:AckHandledMessages
 // True: Alle meldinger kvitteres ut i meldingskøen som utført. Overstyrer valget i 'AckHandledMessages'.
 Dfo:Queue:AckAllMessages
 
+// Maks antall meldinger som hentes fra køen uten å være kvittert ut (prefetch). Meldinger håndteres én og én. 0 = ubegrenset, nødvendig ved bruk av CleanMessagesParser.
+Dfo:Queue:MaxSimultaneousMessages
+
 // Meldingskø satt opp av DFØ.
 Dfo:Queue:Queue
 
