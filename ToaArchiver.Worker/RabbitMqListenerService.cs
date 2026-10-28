@@ -9,6 +9,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
+using Polly;
+using Polly.Retry;
 
 namespace ToaArchiver.Worker
 {
@@ -21,6 +23,7 @@ namespace ToaArchiver.Worker
         private readonly ILogger<RabbitMqListenerService> _logger;
         private IModel? _model;
         private AsyncEventingBasicConsumer? _consumer;
+        private CancellationToken _stoppingToken;
 
         public RabbitMqListenerService(IServiceScopeFactory serviceScopeFactory, IConnection connection, IOptionsMonitor<RabbitMqListenerOptions> options, ILogger<RabbitMqListenerService> logger, TelemetryClient telemetryClient)
         {
@@ -42,6 +45,7 @@ namespace ToaArchiver.Worker
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            _stoppingToken = stoppingToken;
             _model = InitModel();
             _model.BasicQos(prefetchSize: 0, prefetchCount: (ushort)Math.Clamp(_options.CurrentValue.MaxSimultaneousMessages, 0, ushort.MaxValue), global: false);
             _consumer = new AsyncEventingBasicConsumer(_model);
@@ -73,41 +77,62 @@ namespace ToaArchiver.Worker
             _logger.LogDebug("Message redelivered: {MessageId}", message.BasicProperties.MessageId);
             _logger.LogDebug("Message redelivered: {CorrelationId}", message.BasicProperties.CorrelationId);
 
+            RabbitMqListenerOptions currentOptions = _options.CurrentValue;
+            MessageHandlingResult result;
             try
             {
                 byte[] body = message.Body.ToArray();
-
-                using IServiceScope serviceScope = _serviceScopeFactory.CreateScope();
-                var messageHandlerInvoker = serviceScope.ServiceProvider.GetRequiredService<IInvokeMessageHandler<byte[]>>();
-                MessageHandlingResult result = await messageHandlerInvoker.InvokeAsync(body);
-                RabbitMqListenerOptions currentOptions = _options.CurrentValue;
-                bool ackEnabled = currentOptions.AckAllMessages || currentOptions.AckHandledMessages;
-                switch (result.Outcome)
+                result = await BuildInProcessRetryPipeline(currentOptions.Retry).ExecuteAsync(async token =>
                 {
-                    case MessageHandlingOutcome.Handled:
-                        if (ackEnabled) _model?.BasicAck(message.DeliveryTag, false);
-                        break;
-                    case MessageHandlingOutcome.Ignored:
-                        if (currentOptions.AckAllMessages) _model?.BasicAck(message.DeliveryTag, false);
-                        break;
-                    case MessageHandlingOutcome.Reject:
-                        _telemetryClient.TrackEvent("Message rejected", new Dictionary<string, string> { { "RoutingKey", message.RoutingKey }, { "Reason", result.Reason ?? "" } });
-                        _logger.LogError("Message {MessageId} rejected: {Reason}", message.BasicProperties.MessageId, result.Reason);
-                        if (ackEnabled) _model?.BasicAck(message.DeliveryTag, false);
-                        break;
-                    case MessageHandlingOutcome.Retry:
-                        _telemetryClient.TrackEvent("Message retry", new Dictionary<string, string> { { "RoutingKey", message.RoutingKey }, { "Reason", result.Reason ?? "" } });
-                        _logger.LogWarning("Message {MessageId} will be retried: {Reason}", message.BasicProperties.MessageId, result.Reason);
-                        _model?.BasicNack(message.DeliveryTag, false, true);
-                        break;
-                }
+                    using IServiceScope serviceScope = _serviceScopeFactory.CreateScope();
+                    var messageHandlerInvoker = serviceScope.ServiceProvider.GetRequiredService<IInvokeMessageHandler<byte[]>>();
+                    return await messageHandlerInvoker.InvokeAsync(body);
+                }, _stoppingToken);
             }
             catch (Exception ex)
             {
                 _telemetryClient.TrackException(ex);
-                _model?.BasicNack(message.DeliveryTag, false, true);
-                _logger.LogError(ex, "Unhandled exception occured while trying to handle message {Message}", message);
+                _logger.LogError(ex, "Unhandled exception occured while trying to handle message {MessageId}", message.BasicProperties.MessageId);
+                result = MessageHandlingResult.Retry(ex.Message);
             }
+
+            bool ackEnabled = currentOptions.AckAllMessages || currentOptions.AckHandledMessages;
+            switch (result.Outcome)
+            {
+                case MessageHandlingOutcome.Handled:
+                    if (ackEnabled) _model?.BasicAck(message.DeliveryTag, false);
+                    break;
+                case MessageHandlingOutcome.Ignored:
+                    if (currentOptions.AckAllMessages) _model?.BasicAck(message.DeliveryTag, false);
+                    break;
+                case MessageHandlingOutcome.Reject:
+                    _telemetryClient.TrackEvent("Message rejected", new Dictionary<string, string> { { "RoutingKey", message.RoutingKey }, { "Reason", result.Reason ?? "" } });
+                    _logger.LogError("Message {MessageId} rejected: {Reason}", message.BasicProperties.MessageId, result.Reason);
+                    if (ackEnabled) _model?.BasicAck(message.DeliveryTag, false);
+                    break;
+                case MessageHandlingOutcome.Retry:
+                    _telemetryClient.TrackEvent("Message retry", new Dictionary<string, string> { { "RoutingKey", message.RoutingKey }, { "Reason", result.Reason ?? "" } });
+                    _logger.LogWarning("Message {MessageId} will be retried: {Reason}", message.BasicProperties.MessageId, result.Reason);
+                    _model?.BasicNack(message.DeliveryTag, false, true);
+                    break;
+            }
+        }
+
+        private ResiliencePipeline BuildInProcessRetryPipeline(RetryOptions options)
+        {
+            if (options.InProcessAttempts <= 0) return ResiliencePipeline.Empty;
+            return new ResiliencePipelineBuilder().AddRetry(new RetryStrategyOptions
+            {
+                MaxRetryAttempts = options.InProcessAttempts,
+                Delay = options.InProcessDelay,
+                BackoffType = DelayBackoffType.Exponential,
+                UseJitter = true,
+                OnRetry = args =>
+                {
+                    _logger.LogWarning(args.Outcome.Exception, "Handling attempt {Attempt} failed, retrying in {Delay}", args.AttemptNumber + 1, args.RetryDelay);
+                    return ValueTask.CompletedTask;
+                }
+            }).Build();
         }
 
         private IConnection CreateConnection(ConnectionFactory connectionFactory)

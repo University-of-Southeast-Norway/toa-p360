@@ -12,5 +12,12 @@
         public bool AckAllMessages { get; set; }
         public bool AckHandledMessages { get; set; }
         public int MaxSimultaneousMessages { get; set; }
+        public RetryOptions Retry { get; set; } = new();
+    }
+
+    public class RetryOptions
+    {
+        public int InProcessAttempts { get; set; } = 3;
+        public TimeSpan InProcessDelay { get; set; } = TimeSpan.FromSeconds(2);
     }
 }
