@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using ToaArchiver.Domain.Core;
 
 namespace ToaArchiver.Domain;
 
@@ -15,10 +16,8 @@ public class AckMessageHandler : MessageHandlerBase<string>
     {
     }
 
-    protected override Task ExecuteAsync(string message)
+    protected override Task<MessageHandlingResult> ExecuteAsync(string message)
     {
-        return Task.CompletedTask;
+        return Task.FromResult(MessageHandlingResult.Handled());
     }
-
-    protected override bool HandlesMessages() => true;
 }

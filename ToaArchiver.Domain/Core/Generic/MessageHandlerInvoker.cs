@@ -15,11 +15,10 @@ public class MessageHandlerInvoker<TMessage> : IInvokeMessageHandler<TMessage>
         return messageHandler;
     }
 
-    public async Task<IHandleMessage> InvokeAsync(TMessage message)
+    public async Task<MessageHandlingResult> InvokeAsync(TMessage message)
     {
         var messageHandler = _messageParser.Parse(message);
-        await messageHandler.ExecuteAsync();
-        return messageHandler;
+        return await messageHandler.ExecuteAsync();
     }
 }
 public class MessageHandlerInvoker<TParser, TMessage> : MessageHandlerInvoker<TMessage> where TParser : IParseMessage<TMessage>, new()

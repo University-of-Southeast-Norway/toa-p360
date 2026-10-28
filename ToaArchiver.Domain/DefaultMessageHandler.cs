@@ -16,10 +16,8 @@ public class DefaultMessageHandler : MessageHandlerBase<string>
     {
     }
 
-    protected override Task ExecuteAsync(string message)
+    protected override Task<MessageHandlingResult> ExecuteAsync(string message)
     {
-        return Task.CompletedTask;
+        return Task.FromResult(MessageHandlingResult.Ignored());
     }
-
-    protected override bool HandlesMessages() => false;
 }

@@ -90,9 +90,28 @@ namespace ToaArchiver.Worker
 
                 IServiceScope serviceScope = _serviceScopeFactory.CreateScope();
                 var messageHandlerInvoker = serviceScope.ServiceProvider.GetRequiredService<IInvokeMessageHandler<byte[]>>();
-                IHandleMessage messageHandler = await messageHandlerInvoker.InvokeAsync(body);
+                MessageHandlingResult result = await messageHandlerInvoker.InvokeAsync(body);
                 RabbitMqListenerOptions currentOptions = _options.CurrentValue;
-                if (currentOptions.AckAllMessages || currentOptions.AckHandledMessages && messageHandler.Handled) _model?.BasicAck(message.DeliveryTag, false);
+                bool ackEnabled = currentOptions.AckAllMessages || currentOptions.AckHandledMessages;
+                switch (result.Outcome)
+                {
+                    case MessageHandlingOutcome.Handled:
+                        if (ackEnabled) _model?.BasicAck(message.DeliveryTag, false);
+                        break;
+                    case MessageHandlingOutcome.Ignored:
+                        if (currentOptions.AckAllMessages) _model?.BasicAck(message.DeliveryTag, false);
+                        break;
+                    case MessageHandlingOutcome.Reject:
+                        _telemetryClient.TrackEvent("Message rejected", new Dictionary<string, string> { { "RoutingKey", message.RoutingKey }, { "Reason", result.Reason ?? "" } });
+                        _logger.LogError("Message {MessageId} rejected: {Reason}", message.BasicProperties.MessageId, result.Reason);
+                        if (ackEnabled) _model?.BasicAck(message.DeliveryTag, false);
+                        break;
+                    case MessageHandlingOutcome.Retry:
+                        _telemetryClient.TrackEvent("Message retry", new Dictionary<string, string> { { "RoutingKey", message.RoutingKey }, { "Reason", result.Reason ?? "" } });
+                        _logger.LogWarning("Message {MessageId} will be retried: {Reason}", message.BasicProperties.MessageId, result.Reason);
+                        _model?.BasicNack(message.DeliveryTag, false, true);
+                        break;
+                }
             }
             catch (Exception ex)
             {
