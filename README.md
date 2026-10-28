@@ -146,6 +146,12 @@ Dfo:Queue:AckAllMessages
 // Maks antall meldinger som hentes fra køen uten å være kvittert ut (prefetch). Meldinger håndteres én og én. 0 = ubegrenset, nødvendig ved bruk av CleanMessagesParser.
 Dfo:Queue:MaxSimultaneousMessages
 
+// Antall nye forsøk i prosessen når håndtering av en melding kaster exception (f.eks. DFØ eller P360 utilgjengelig), før meldingen går videre til retry. Standard 3, 0 = av.
+Dfo:Queue:Retry:InProcessAttempts
+
+// Forsinkelse før første nye forsøk i prosessen, dobles for hvert forsøk. Standard 00:00:02.
+Dfo:Queue:Retry:InProcessDelay
+
 // Meldingskø satt opp av DFØ.
 Dfo:Queue:Queue
 
