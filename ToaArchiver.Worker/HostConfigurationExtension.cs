@@ -105,7 +105,8 @@ public static class HostConfigurationExtension
         };
         return new ConnectionFactory
         {
-            Uri = uriBuilder.Uri
+            Uri = uriBuilder.Uri,
+            DispatchConsumersAsync = true
         };
     }
 }

@@ -27,12 +27,22 @@ public class RabbitMqMessageParserTester
     }
 
     [Fact]
-    public async Task Parse_called__With_non_contract_uri__Returns_handler_that_ignores()
+    public async Task Parse_called__With_non_contract_uri__Returns_handler_that_acks()
     {
         IHandleMessage handler = _parser.Parse(Encoding.UTF8.GetBytes("{\"uri\":\"https://api.dfo.no/ansatte/1\",\"id\":\"1\"}"));
 
         MessageHandlingResult result = await handler.ExecuteAsync();
 
-        Assert.Equal(MessageHandlingOutcome.Ignored, result.Outcome);
+        Assert.Equal(MessageHandlingOutcome.Handled, result.Outcome);
+    }
+
+    [Fact]
+    public async Task Parse_called__With_contract_change_without_status__Returns_handler_that_acks()
+    {
+        IHandleMessage handler = _parser.Parse(Encoding.UTF8.GetBytes("{\"uri\":\"https://api.dfo.no/infokontrakter/filer/1\",\"id\":\"1\",\"feltnavn\":[\"dato\"]}"));
+
+        MessageHandlingResult result = await handler.ExecuteAsync();
+
+        Assert.Equal(MessageHandlingOutcome.Handled, result.Outcome);
     }
 }

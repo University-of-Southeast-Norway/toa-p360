@@ -20,9 +20,7 @@ namespace ToaArchiver.Worker
         private readonly TelemetryClient _telemetryClient;
         private readonly ILogger<RabbitMqListenerService> _logger;
         private IModel? _model;
-        private EventingBasicConsumer? _consumer;
-        private static readonly SemaphoreSlim _theLock = new(1,1);
-        private static int _currentCount = 0;
+        private AsyncEventingBasicConsumer? _consumer;
 
         public RabbitMqListenerService(IServiceScopeFactory serviceScopeFactory, IConnection connection, IOptionsMonitor<RabbitMqListenerOptions> options, ILogger<RabbitMqListenerService> logger, TelemetryClient telemetryClient)
         {
@@ -45,11 +43,9 @@ namespace ToaArchiver.Worker
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _model = InitModel();
-            _consumer = new EventingBasicConsumer(_model);
-            _consumer.Received += (model, ea) =>
-            {
-                MessageReceived(ea);
-            };
+            _model.BasicQos(prefetchSize: 0, prefetchCount: (ushort)Math.Clamp(_options.CurrentValue.MaxSimultaneousMessages, 0, ushort.MaxValue), global: false);
+            _consumer = new AsyncEventingBasicConsumer(_model);
+            _consumer.Received += (model, ea) => MessageReceived(ea);
             _model.BasicConsume(queue: _options.CurrentValue.Queue, autoAck: false, consumer: _consumer);
             _logger.LogInformation("Listening on {Queue}@{Connection}", _options.CurrentValue.Queue, _connection);
 
@@ -65,13 +61,8 @@ namespace ToaArchiver.Worker
             return _connection?.CreateModel()!;
         }
 
-        private async void MessageReceived(BasicDeliverEventArgs message)
+        private async Task MessageReceived(BasicDeliverEventArgs message)
         {
-            if (_currentCount >= _options.CurrentValue.MaxSimultaneousMessages)
-            {
-                _model?.BasicNack(message.DeliveryTag, false, true);
-                return;
-            }
             RequestTelemetry requestTelemetry = new() { Name = $"Process {_connection?.Endpoint}" };
             requestTelemetry.Context.Operation.Id = message.BasicProperties.MessageId;
             requestTelemetry.Context.Operation.ParentId = message.BasicProperties.CorrelationId;
@@ -84,11 +75,9 @@ namespace ToaArchiver.Worker
 
             try
             {
-                _currentCount++;
                 byte[] body = message.Body.ToArray();
-                await _theLock.WaitAsync();
 
-                IServiceScope serviceScope = _serviceScopeFactory.CreateScope();
+                using IServiceScope serviceScope = _serviceScopeFactory.CreateScope();
                 var messageHandlerInvoker = serviceScope.ServiceProvider.GetRequiredService<IInvokeMessageHandler<byte[]>>();
                 MessageHandlingResult result = await messageHandlerInvoker.InvokeAsync(body);
                 RabbitMqListenerOptions currentOptions = _options.CurrentValue;
@@ -118,11 +107,6 @@ namespace ToaArchiver.Worker
                 _telemetryClient.TrackException(ex);
                 _model?.BasicNack(message.DeliveryTag, false, true);
                 _logger.LogError(ex, "Unhandled exception occured while trying to handle message {Message}", message);
-            }
-            finally
-            {
-                _currentCount--;
-                _theLock.Release();
             }
         }
 

@@ -46,10 +46,10 @@ public class RabbitMqMessageParser : IParseMessage<byte[]>
         string? uri = (string?)messageObj.uri;
         if (string.IsNullOrEmpty(uri)) return new RejectedMessageHandler(messageString, "Message has no uri", _loggerFactory);
 
-        if (!uri.Contains("infokontrakter/filer", StringComparison.CurrentCultureIgnoreCase)) return new DefaultMessageHandler(messageString, _loggerFactory);
+        if (!uri.Contains("infokontrakter/filer", StringComparison.CurrentCultureIgnoreCase)) return new AckMessageHandler(messageString, _loggerFactory);
 
         var felternavn = messageObj.feltnavn as JArray;
-        if (felternavn?.Any(f => f.ToString() == "status") == false) return new DefaultMessageHandler(messageString, _loggerFactory);
+        if (felternavn?.Any(f => f.ToString() == "status") == false) return new AckMessageHandler(messageString, _loggerFactory);
 
         string id = (string)messageObj.id;
         string validAfter = (string)messageObj.gyldigEtter;
