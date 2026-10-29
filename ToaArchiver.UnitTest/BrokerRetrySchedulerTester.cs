@@ -42,6 +42,47 @@ public class BrokerRetrySchedulerTester
         _mockModel.Verify(m => m.WaitForConfirmsOrDie(It.IsAny<TimeSpan>()), Times.Once);
     }
 
+    [Theory]
+    [InlineData(1, false)]
+    [InlineData(3, true)]
+    public void Schedule_called__With_previous_attempts__Sets_parked_at_only_when_parked(int previousAttempt, bool expectParkedAt)
+    {
+        _scheduler.Schedule(CreateMessage(previousAttempt), "reason");
+
+        Assert.Equal(expectParkedAt, _publishedProperties!.Headers.ContainsKey(BrokerRetryScheduler.ParkedAtHeader));
+    }
+
+    [Fact]
+    public void GetStatistics_called__With_parked_messages__Returns_counts_and_requeues_oldest()
+    {
+        DateTimeOffset parkedAt = new(2026, 10, 1, 12, 0, 0, TimeSpan.Zero);
+        SetupQueueCount("toa.retry.60s", 2);
+        SetupQueueCount("toa.retry.600s", 3);
+        SetupQueueCount("toa.parking", 4);
+        _mockModel.Setup(m => m.BasicGet("toa.parking", false)).Returns(CreateGetResult(7, new Dictionary<string, object> { [BrokerRetryScheduler.ParkedAtHeader] = parkedAt.ToUnixTimeMilliseconds() }));
+
+        RetryQueueStatistics statistics = _scheduler.GetStatistics();
+
+        Assert.Equal(new RetryQueueStatistics(5, 4, parkedAt), statistics);
+        _mockModel.Verify(m => m.BasicNack(7, false, true), Times.Once);
+    }
+
+    [Fact]
+    public void ReplayParked_called__With_parked_messages__Publishes_to_main_queue_without_retry_headers_and_acks()
+    {
+        SetupQueueCount("toa.parking", 2);
+        Dictionary<string, object> headers = new() { [BrokerRetryScheduler.AttemptHeader] = 11, [BrokerRetryScheduler.ReasonHeader] = "reason", [BrokerRetryScheduler.ParkedAtHeader] = 1L, ["other"] = "kept" };
+        _mockModel.SetupSequence(m => m.BasicGet("toa.parking", false)).Returns(CreateGetResult(1, headers)).Returns(CreateGetResult(2, headers)).Returns(CreateGetResult(3, headers));
+
+        int replayed = _scheduler.ReplayParked();
+
+        Assert.Equal(2, replayed);
+        Assert.Equal(Queue, _publishedTo);
+        Assert.Equal(new[] { "other" }, _publishedProperties!.Headers.Keys);
+        _mockModel.Verify(m => m.BasicAck(It.IsAny<ulong>(), false), Times.Exactly(2));
+        _mockModel.Verify(m => m.BasicAck(3, false), Times.Never);
+    }
+
     [Fact]
     public void DeclareTopology_called__Declares_parking_and_wait_queues_dead_lettering_to_main_queue()
     {
@@ -59,6 +100,16 @@ public class BrokerRetrySchedulerTester
         properties.Headers = new Dictionary<string, object> { [BrokerRetryScheduler.AttemptHeader] = 5L };
 
         Assert.Equal(5, BrokerRetryScheduler.GetAttempt(properties));
+    }
+
+    private void SetupQueueCount(string queue, uint count) =>
+        _mockModel.Setup(m => m.QueueDeclarePassive(queue)).Returns(new QueueDeclareOk(queue, count, 0));
+
+    private static BasicGetResult CreateGetResult(ulong deliveryTag, Dictionary<string, object> headers)
+    {
+        IBasicProperties properties = new Mock<IBasicProperties>().SetupAllProperties().Object;
+        properties.Headers = new Dictionary<string, object>(headers);
+        return new BasicGetResult(deliveryTag, false, "", "toa.parking", 0, properties, new byte[] { 1 });
     }
 
     private static BasicDeliverEventArgs CreateMessage(int? previousAttempt)
