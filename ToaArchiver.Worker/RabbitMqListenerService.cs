@@ -27,6 +27,8 @@ namespace ToaArchiver.Worker
         private BrokerRetryScheduler? _retryScheduler;
         private ConsumerCircuitBreaker? _circuitBreaker;
         private string? _consumerTag;
+        private static readonly TimeSpan MetricsInterval = TimeSpan.FromMinutes(1);
+        private DateTimeOffset _lastMetricsReport = DateTimeOffset.MinValue;
 
         public RabbitMqListenerService(IServiceScopeFactory serviceScopeFactory, IConnection connection, IOptionsMonitor<RabbitMqListenerOptions> options, ILogger<RabbitMqListenerService> logger, TelemetryClient telemetryClient)
         {
@@ -73,6 +75,7 @@ namespace ToaArchiver.Worker
                     _logger.LogWarning("Circuit half-open, resuming consumption on {Queue}", _options.CurrentValue.Queue);
                     _consumerTag = _model.BasicConsume(queue: _options.CurrentValue.Queue, autoAck: false, consumer: _consumer);
                 }
+                if (_retryScheduler != null && DateTimeOffset.UtcNow - _lastMetricsReport >= MetricsInterval) ReportRetryMetrics();
                 await Task.Delay(10000, stoppingToken);
             }
         }
@@ -137,6 +140,25 @@ namespace ToaArchiver.Worker
                     _logger.LogWarning("Message {MessageId} will be requeued: {Reason}", message.BasicProperties.MessageId, result.Reason);
                     _model?.BasicNack(message.DeliveryTag, false, true);
                     break;
+            }
+        }
+
+        private void ReportRetryMetrics()
+        {
+            _lastMetricsReport = DateTimeOffset.UtcNow;
+            try
+            {
+                using IModel model = _connection!.CreateModel();
+                RetryQueueStatistics statistics = new BrokerRetryScheduler(model, _options.CurrentValue.Queue, _options.CurrentValue.Retry).GetStatistics();
+                _telemetryClient.TrackMetric("Messages waiting for retry", statistics.Waiting);
+                _telemetryClient.TrackMetric("Parked messages", statistics.Parked);
+                double oldestParkedMinutes = statistics.OldestParkedAt is { } parkedAt ? (DateTimeOffset.UtcNow - parkedAt).TotalMinutes : 0;
+                _telemetryClient.TrackMetric("Oldest parked message age (minutes)", oldestParkedMinutes);
+                if (statistics.Parked > 0) _logger.LogWarning("{Parked} parked message(s) in {ParkingQueue}, oldest parked {OldestParkedMinutes:F0} minutes ago", statistics.Parked, _retryScheduler!.ParkingQueue, oldestParkedMinutes);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not read retry queue statistics");
             }
         }
 

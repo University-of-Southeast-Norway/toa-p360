@@ -107,6 +107,25 @@ Get-Content log{dato:yyyymmdd}.txt -wait
 
 ```
 
+### Overvåking og parkerte meldinger
+I Broker-modus (`Dfo:Queue:Retry:Mode`) sender løsningen disse metrikkene til Application Insights hvert minutt:
+
+- `Messages waiting for retry`: antall meldinger i ventekøene `<Queue>.retry.*`.
+- `Parked messages`: antall meldinger i `<Queue>.parking`.
+- `Oldest parked message age (minutes)`: hvor lenge den eldste parkerte meldingen har ligget der.
+
+I tillegg logges eventene `Message rejected`, `Message retry`, `Message parked`, `Circuit opened`, `Circuit half-open` og `Circuit closed`. Sett opp alarm på f.eks. `Parked messages > 0`.
+
+Når årsaken er rettet, flyttes parkerte meldinger tilbake til køen med nullstilt antall forsøk ved å starte løsningen med argumentet `--replay-parked`. Løsningen avslutter når meldingene er flyttet. Samme konfigurasjon som ellers benyttes.
+
+``` PS
+# Docker
+docker run --rm --env-file toa.env <image> --replay-parked
+
+# Windows
+ToaArchiver.WindowsService.exe --replay-parked
+```
+
 ## Oppsett av miljøkonfigurasjon
 Konfigurasjon av miljø variable settes opp i en fil kaldt _appsettings.json_. Det følger med en _appsettings.template.json_ som inneholder alle parameterne som skal settes opp. En del parametere er forhåndsdefinert, og det er ikke behov for å endre disse.
 

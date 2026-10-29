@@ -5,6 +5,9 @@ using ToaArchiver.Worker.Extensions;
 Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
 #endif
 
+bool replayParked = args.Contains(ParkedMessageReplayer.Argument);
+args = args.Where(a => a != ParkedMessageReplayer.Argument).ToArray();
+
 using IHost host = Host.CreateDefaultBuilder(args)
     .UseWindowsService(options =>
     {
@@ -13,6 +16,12 @@ using IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureToaServices()
     .ConfigureServices(ConfigureHostedService)
     .Build();
+
+if (replayParked)
+{
+    ParkedMessageReplayer.Replay(host.Services);
+    return;
+}
 
 var logger = host.Services.GetRequiredService<ILogger<Program>>();
 try

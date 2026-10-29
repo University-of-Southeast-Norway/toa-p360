@@ -1,6 +1,9 @@
 using ToaArchiver.Worker;
 using ToaArchiver.Worker.Extensions;
 
+bool replayParked = args.Contains(ParkedMessageReplayer.Argument);
+args = args.Where(a => a != ParkedMessageReplayer.Argument).ToArray();
+
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureToaServices()
     .ConfigureServices(ConfigureHostedService)
@@ -8,6 +11,12 @@ IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureAppConfiguration(c => c.AddUserSecrets<Program>())
 #endif
     .Build();
+
+if (replayParked)
+{
+    ParkedMessageReplayer.Replay(host.Services);
+    return;
+}
 
 var logger = host.Services.GetRequiredService<ILogger<Program>>();
 try
