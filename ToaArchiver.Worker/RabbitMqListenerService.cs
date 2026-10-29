@@ -25,6 +25,8 @@ namespace ToaArchiver.Worker
         private AsyncEventingBasicConsumer? _consumer;
         private CancellationToken _stoppingToken;
         private BrokerRetryScheduler? _retryScheduler;
+        private ConsumerCircuitBreaker? _circuitBreaker;
+        private string? _consumerTag;
 
         public RabbitMqListenerService(IServiceScopeFactory serviceScopeFactory, IConnection connection, IOptionsMonitor<RabbitMqListenerOptions> options, ILogger<RabbitMqListenerService> logger, TelemetryClient telemetryClient)
         {
@@ -56,14 +58,21 @@ namespace ToaArchiver.Worker
                 _retryScheduler.DeclareTopology();
                 _logger.LogInformation("Broker retry enabled, parking queue {ParkingQueue}", _retryScheduler.ParkingQueue);
             }
+            _circuitBreaker = new ConsumerCircuitBreaker(_options.CurrentValue.CircuitBreaker, TimeProvider.System);
             _consumer = new AsyncEventingBasicConsumer(_model);
             _consumer.Received += (model, ea) => MessageReceived(ea);
-            _model.BasicConsume(queue: _options.CurrentValue.Queue, autoAck: false, consumer: _consumer);
+            _consumerTag = _model.BasicConsume(queue: _options.CurrentValue.Queue, autoAck: false, consumer: _consumer);
             _logger.LogInformation("Listening on {Queue}@{Connection}", _options.CurrentValue.Queue, _connection);
 
             while (!stoppingToken.IsCancellationRequested)
             {
                 _logger.LogDebug("Worker running at: {time}", DateTimeOffset.Now);
+                if (_circuitBreaker.TryHalfOpen())
+                {
+                    _telemetryClient.TrackEvent("Circuit half-open");
+                    _logger.LogWarning("Circuit half-open, resuming consumption on {Queue}", _options.CurrentValue.Queue);
+                    _consumerTag = _model.BasicConsume(queue: _options.CurrentValue.Queue, autoAck: false, consumer: _consumer);
+                }
                 await Task.Delay(10000, stoppingToken);
             }
         }
@@ -87,6 +96,7 @@ namespace ToaArchiver.Worker
 
             RabbitMqListenerOptions currentOptions = _options.CurrentValue;
             MessageHandlingResult result;
+            bool failed = false;
             try
             {
                 byte[] body = message.Body.ToArray();
@@ -102,7 +112,10 @@ namespace ToaArchiver.Worker
                 _telemetryClient.TrackException(ex);
                 _logger.LogError(ex, "Unhandled exception occured while trying to handle message {MessageId}", message.BasicProperties.MessageId);
                 result = MessageHandlingResult.Retry(ex.Message);
+                failed = true;
             }
+
+            UpdateCircuitBreaker(failed);
 
             bool ackEnabled = currentOptions.AckAllMessages || currentOptions.AckHandledMessages;
             switch (result.Outcome)
@@ -124,6 +137,22 @@ namespace ToaArchiver.Worker
                     _logger.LogWarning("Message {MessageId} will be requeued: {Reason}", message.BasicProperties.MessageId, result.Reason);
                     _model?.BasicNack(message.DeliveryTag, false, true);
                     break;
+            }
+        }
+
+        private void UpdateCircuitBreaker(bool failed)
+        {
+            if (_circuitBreaker == null) return;
+            if (failed && _circuitBreaker.RecordFailure())
+            {
+                _model?.BasicCancelNoWait(_consumerTag);
+                _telemetryClient.TrackEvent("Circuit opened");
+                _logger.LogError("Circuit opened, pausing consumption on {Queue} for {BreakDuration}", _options.CurrentValue.Queue, _options.CurrentValue.CircuitBreaker.BreakDuration);
+            }
+            else if (!failed && _circuitBreaker.RecordSuccess())
+            {
+                _telemetryClient.TrackEvent("Circuit closed");
+                _logger.LogInformation("Circuit closed on {Queue}", _options.CurrentValue.Queue);
             }
         }
 
