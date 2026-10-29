@@ -160,8 +160,11 @@ Dfo:Queue:Retry:Mode
 // Forsinkelse per nytt forsøk i Broker-modus, f.eks. ["00:01:00", "00:10:00", "01:00:00", "06:00:00"] (standard). Siste verdi brukes for resterende forsøk.
 Dfo:Queue:Retry:Delays
 
-// Antall nye forsøk i Broker-modus før meldingen parkeres. Standard 10.
-Dfo:Queue:Retry:MaxAttempts
+// Antall meldinger på rad som feiler med exception (etter forsøkene i prosessen) før konsumering fra køen pauses, f.eks. når P360 eller DFØ er nede. Standard 5, 0 = av.
+Dfo:Queue:CircuitBreaker:FailureThreshold
+
+// Hvor lenge konsumering pauses. Deretter hentes meldinger igjen: én feil pauser på nytt, én vellykket melding gjenopptar normal drift. Standard 00:05:00.
+Dfo:Queue:CircuitBreaker:BreakDuration
 
 // Meldingskø satt opp av DFØ.
 Dfo:Queue:Queue

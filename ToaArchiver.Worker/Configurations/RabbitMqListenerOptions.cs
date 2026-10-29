@@ -13,6 +13,13 @@
         public bool AckHandledMessages { get; set; }
         public int MaxSimultaneousMessages { get; set; }
         public RetryOptions Retry { get; set; } = new();
+        public CircuitBreakerOptions CircuitBreaker { get; set; } = new();
+    }
+
+    public class CircuitBreakerOptions
+    {
+        public int FailureThreshold { get; set; } = 5;
+        public TimeSpan BreakDuration { get; set; } = TimeSpan.FromMinutes(5);
     }
 
     public enum RetryMode
